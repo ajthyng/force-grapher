@@ -15,6 +15,9 @@
     "txstate-node-utils": "^2.8.8",
     "uuid": "^3.3.2"
   },
+  "resolutions": {
+    "lodash.template": "^4.5.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
