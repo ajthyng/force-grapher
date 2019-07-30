@@ -85,6 +85,7 @@ export const SystemsGraph = props => {
     systemsDispatch({ type: 'update' })
   }
   const resetActiveNode = () => setActiveNode(null)
+  const displayNodeDetails = useEvent('display-node-details')
 
   useEffect(() => {
     systemsGraph.current.d3Force('charge').strength(-150)
@@ -93,12 +94,10 @@ export const SystemsGraph = props => {
 
   useEffect(() => {
     if (activeNode) displayNodeDetails(activeNode)
-  }, [activeNode])
+  }, [activeNode, displayNodeDetails])
 
   useEvent('save-node-entry', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
-
-  const displayNodeDetails = useEvent('display-node-details')
 
   return (
     <ForceGraph2D
