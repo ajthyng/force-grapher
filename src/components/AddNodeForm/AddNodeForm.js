@@ -103,7 +103,7 @@ export const AddNodeForm = props => {
 
   }, [])
 
-  const submitSystem = () => {
+  const submitSystem = async () => {
     const errors = validate(addNodeForm)
     if (Object.keys(errors).length > 0) {
       setNodeFormErrors({
@@ -123,8 +123,9 @@ export const AddNodeForm = props => {
     }
 
     const node = Graph.makeNode({ connections, data })
+
     NodeManager.addNode({ key: node.id, ...addNodeForm })
-    Graph.addNode(node)
+    await Graph.addNode(node)
 
     broadcastNodeSave()
     resetConnections()

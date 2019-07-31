@@ -15,6 +15,7 @@ const _Graph = () => {
   }
 
   const setEdges = async (edges) => {
+    console.log(edges)
     return _set('_edges', edges)
   }
 
@@ -25,12 +26,10 @@ const _Graph = () => {
   const addNode = async (node) => {
     if (!node.id) throw new Error('Nodes must have IDs to be added')
     const _nodes = await getNodes()
-    const _edges = await getEdges()
 
     _nodes[node.id] = node
-    _edges[node.id] = []
 
-    await setEdges(_edges)
+    await makeEdges(node)
     await setNodes(_nodes)
   }
 
@@ -39,10 +38,13 @@ const _Graph = () => {
 
     const _edges = await getEdges()
 
+    if (!Array.isArray(_edges[node1.id])) _edges[node1.id] = []
+    if (!Array.isArray(_edges[node2.id])) _edges[node2.id] = []
+
     _edges[node1.id].push({ node: node2.id, data })
     _edges[node2.id].push({ node: node1.id, data })
 
-    await setEdges(_edges)
+    await setEdges({ ..._edges })
   }
 
   const addDirectedEdge = async (node1, node2, data) => {
@@ -50,9 +52,11 @@ const _Graph = () => {
 
     const _edges = await getEdges()
 
+    if (!Array.isArray(_edges[node1.id])) _edges[node1.id] = []
+
     _edges[node1.id].push({ node: node2.id, data })
 
-    await setEdges(_edges)
+    await setEdges({ ..._edges })
   }
 
   const removeDirectedEdge = async (node1) => {
@@ -111,10 +115,31 @@ const _Graph = () => {
     return node
   }
 
+  const makeEdges = async (node) => {
+    const edges = get(node, 'edges', [])
+    if (edges.length <= 0) return
+
+    for (let i = 0; i < edges.length; i++) {
+      const edge = edges[i]
+      const edgeType = get(edge, 'data.type.id')
+      const node1 = {
+        id: get(node, 'id')
+      }
+      const node2 = {
+        id: get(edge, 'id')
+      }
+
+      console.log('MAKE EDGES: ', node1, node2, edge, edgeType)
+      if (edgeType === 'oneway') {
+        await addDirectedEdge(node1, node2, get(edge, 'data'))
+      } else if (edgeType === 'twoway') {
+        await addEdge(node1, node2, get(edge, 'data'))
+      }
+    }
+  }
+
   return {
     addNode,
-    addEdge,
-    addDirectedEdge,
     removeEdge,
     removeDirectedEdge,
     makeNode
