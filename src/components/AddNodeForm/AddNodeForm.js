@@ -105,6 +105,7 @@ export const AddNodeForm = props => {
 
   const submitSystem = async () => {
     const errors = validate(addNodeForm)
+    console.log(addNodeForm)
     if (Object.keys(errors).length > 0) {
       setNodeFormErrors({
         ...nodeFormErrors,
@@ -193,13 +194,13 @@ export const AddNodeForm = props => {
         label='Department'
         placeholder='Was this built for another department?'
         onChange={(event, value) => updateNodeForm({ path: 'department', value })}
-        value={addNodeForm.department || null}
+        value={addNodeForm.department || ''}
       />
       <TextField
         label='URL'
         placeholder='Is there a url to access this system?'
         onChange={(event, value) => updateNodeForm({ path: 'url', value })}
-        value={addNodeForm.url || null}
+        value={addNodeForm.url || ''}
       />
       <TextField
         label='Description'

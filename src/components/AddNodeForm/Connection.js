@@ -1,13 +1,15 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
+import { ConnectionReadWrite } from './ConnectionReadWrite'
 import get from 'lodash.get'
 import { IconButton } from 'office-ui-fabric-react'
 
 const ConnectionContainer = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  padding-top: 16px;
 
   & > .ms-Dropdown-container {
     flex: 1;
@@ -23,8 +25,19 @@ export const Connection = props => {
   const { handleRemove, id, addNodeForm, nodeFormErrors, setNodeFormErrors, existingSystems, updateNodeForm } = props
   const selectedTarget = get(addNodeForm, `connections[${id}].connectedTo.key`, null)
   const selectedType = get(addNodeForm, `connections[${id}].connectionType.key`, null)
+
+  const selectedRead = get(addNodeForm, `connections[${id}].read`, true)
+  const selectedWrite = get(addNodeForm, `connections[${id}].write`, false)
+
   const targetError = get(nodeFormErrors, `[${id}].target`)
   const typeError = get(nodeFormErrors, `[${id}].type`)
+
+  useEffect(() => {
+    updateNodeForm({
+      path: `connections[${id}].read`,
+      value: true
+    })
+  }, [updateNodeForm, id])
 
   return (
     <ConnectionContainer>
@@ -46,12 +59,10 @@ export const Connection = props => {
         }}
       />
       <Dropdown
-        label='Connection Type'
+        label='Interface'
         options={[
-          { key: 'oneway', text: 'One Way Interface' },
-          { key: 'twoway', text: 'Two Way Interface' },
-          { key: 'builtin', text: 'Built In Interface' },
-          { key: 'custom', text: 'Custom Interface' }
+          { key: 'builtin', text: 'Built In' },
+          { key: 'custom', text: 'Custom' }
         ]}
         placeholder='How does this system connect?'
         selectedKey={selectedType}
@@ -64,6 +75,16 @@ export const Connection = props => {
           setNodeFormErrors({
             ...nodeFormErrors,
             [id]: { type: null }
+          })
+        }}
+      />
+      <ConnectionReadWrite
+        read={selectedRead}
+        write={selectedWrite}
+        onChange={(path, value) => {
+          updateNodeForm({
+            path: `connections[${id}].${path}`,
+            value
           })
         }}
       />

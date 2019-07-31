@@ -98,12 +98,19 @@ const _Graph = () => {
       const type = get(connections, `${[key]}.connectionType`, null)
       if (!type) throw new Error('You cannot make a connection without a type')
 
+      const read = get(connections, `${[key]}.read`, null)
+      const write = get(connections, `${[key]}.write`, null)
+
+      if (!read && !write) throw new Error('You must specify a read or a write option')
+
       const data = get(connections, `[${key}].data`, {})
 
       node.edges.push({
         id: info.key,
         data: {
           ...data,
+          read,
+          write,
           type: {
             id: type.key,
             label: type.text
@@ -121,7 +128,10 @@ const _Graph = () => {
 
     for (let i = 0; i < edges.length; i++) {
       const edge = edges[i]
-      const edgeType = get(edge, 'data.type.id')
+
+      const read = get(edge, 'data.read')
+      const write = get(edge, 'data.write')
+
       const node1 = {
         id: get(node, 'id')
       }
@@ -129,11 +139,12 @@ const _Graph = () => {
         id: get(edge, 'id')
       }
 
-      console.log('MAKE EDGES: ', node1, node2, edge, edgeType)
-      if (edgeType === 'oneway') {
-        await addDirectedEdge(node1, node2, get(edge, 'data'))
-      } else if (edgeType === 'twoway') {
+      if (read && write) {
         await addEdge(node1, node2, get(edge, 'data'))
+      } else if (write) {
+        await addDirectedEdge(node2, node1, get(edge, 'data'))
+      } else if (read) {
+        await addDirectedEdge(node1, node2, get(edge, 'data'))
       }
     }
   }
