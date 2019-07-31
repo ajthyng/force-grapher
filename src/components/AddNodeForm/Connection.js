@@ -20,20 +20,28 @@ const ConnectionContainer = styled.div`
 `
 
 export const Connection = props => {
-  const { handleRemove, id, addNodeForm, existingSystems, updateNodeForm } = props
+  const { handleRemove, id, addNodeForm, nodeFormErrors, setNodeFormErrors, existingSystems, updateNodeForm } = props
   const selectedTarget = get(addNodeForm, `connections[${id}].connectedTo.key`, null)
   const selectedType = get(addNodeForm, `connections[${id}].connectionType.key`, null)
+  const targetError = get(nodeFormErrors, `[${id}].target`)
+  const typeError = get(nodeFormErrors, `[${id}].type`)
 
   return (
     <ConnectionContainer>
       <Dropdown
         label='Connected To'
+        placeholder={`What does ${addNodeForm.name || 'this system'} connect to?`}
         options={existingSystems}
+        errorMessage={targetError}
         selectedKey={selectedTarget}
         onChange={(event, value) => {
           updateNodeForm({
             path: `connections[${id}].connectedTo`,
             value: { key: value.key, text: value.text }
+          })
+          setNodeFormErrors({
+            ...nodeFormErrors,
+            [id]: { type: null }
           })
         }}
       />
@@ -45,17 +53,32 @@ export const Connection = props => {
           { key: 'builtin', text: 'Built In Interface' },
           { key: 'custom', text: 'Custom Interface' }
         ]}
+        placeholder='How does this system connect?'
         selectedKey={selectedType}
+        errorMessage={typeError}
         onChange={(event, value) => {
           updateNodeForm({
             path: `connections[${id}].connectionType`,
             value: { key: value.key, text: value.text, color: value.color }
           })
+          setNodeFormErrors({
+            ...nodeFormErrors,
+            [id]: { type: null }
+          })
         }}
       />
       <IconButton
         iconProps={{ iconName: 'Delete' }}
-        onClick={handleRemove}
+        onClick={() => {
+          const connection = get(addNodeForm, `connections[${id}]`, null)
+          if (connection) {
+            updateNodeForm({
+              path: `connections[${id}]`,
+              type: 'remove'
+            })
+          }
+          handleRemove()
+        }}
       />
     </ConnectionContainer>
   )

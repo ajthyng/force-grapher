@@ -1,54 +1,48 @@
-import React, { useState, useReducer } from 'react'
+import React, { useState, useEffect, useReducer } from 'react'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
 import { NodeManager, Graph } from '../../util'
 import { TextField } from 'office-ui-fabric-react/lib/TextField'
-import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
 import { ActionButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
 import uuid from 'uuid/v4'
 import set from 'lodash.set'
+import unset from 'lodash.unset'
 import { Connection } from './Connection'
+import { SystemType } from './SystemType'
 
 const addNodeReducer = (state, action) => {
   if (action.path === '') return {}
   const addNodeState = { ...state }
-  set(addNodeState, action.path, action.value)
-  return addNodeState
+  switch (action.type) {
+    case 'remove':
+      unset(addNodeState, action.path)
+      return addNodeState
+    default:
+      set(addNodeState, action.path, action.value)
+      return addNodeState
+  }
 }
 
-// URL
-// Department
-
-const connectionReducer = (state, action) => {
+const connectionReducer = (connections, action) => {
   switch (action.type) {
     case 'add':
       const id = uuid()
-      return {
-        ...state,
-        connections: [
-          ...state.connections,
-          <Connection
-            key={id}
-            id={id}
-            handleRemove={() => action.dispatch({ type: 'remove', id })}
-          />
-        ]
-      }
+      return [
+        ...connections,
+        <Connection
+          key={id}
+          id={id}
+          handleRemove={() => action.dispatch({ type: 'remove', id })}
+        />
+      ]
     case 'remove':
-      return {
-        ...state,
-        connections: [
-          ...state.connections.filter(({ key }) => key !== action.id)
-        ]
-      }
+      return connections.filter(({ key }) => key !== action.id)
     case 'reset':
-      return {
-        connections: []
-      }
+      return []
     default:
-      return state
+      return connections
   }
 }
 
@@ -57,18 +51,44 @@ const getSystems = () => {
   return nodes.map(node => ({ key: node.key, text: node.name }))
 }
 
-const renderConnections = ({ connections, existingSystems, addNodeForm, updateNodeForm }) => {
-  return connections.map(conn => React.cloneElement(conn, { existingSystems, addNodeForm, updateNodeForm }))
+const renderConnections = ({ connections, existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors }) => {
+  return connections.map(conn => React.cloneElement(conn, { existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors }))
+}
+
+const validate = (addNodeForm) => {
+  const errors = {}
+  if (!addNodeForm.type) {
+    errors.type = 'A system type must be selected'
+  }
+
+  if (!addNodeForm.name) {
+    errors.name = 'A system name is required'
+  }
+
+  if (addNodeForm.connections) {
+    const keys = Object.keys(addNodeForm.connections || {})
+    keys.forEach(key => {
+      const target = get(addNodeForm, `connections[${key}].connectedTo.key`, null)
+      const type = get(addNodeForm, `connections[${key}].connectionType.key`, null)
+
+      if (!type) set(errors, `[${key}].type`, 'The connection must have a type selected')
+      if (!target) set(errors, `[${key}].target`, 'You must select another system to connect to')
+    })
+  }
+
+  return errors
 }
 
 export const AddNodeForm = props => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
   const [existingSystems, setExistingSystems] = useState(getSystems())
-  const [state, connDispatch] = useReducer(connectionReducer, { connections: [] })
+  const [nodeFormErrors, setNodeFormErrors] = useState({})
+  const [connections, connDispatch] = useReducer(connectionReducer, [])
 
   const toggle = () => setIsOpen(!isOpen)
   const resetForm = () => updateNodeForm({ path: '', value: {} })
   const resetConnections = () => connDispatch({ type: 'reset' })
+
   const addConnection = () => {
     connDispatch({
       type: 'add',
@@ -79,13 +99,29 @@ export const AddNodeForm = props => {
     })
   }
 
+  useEffect(() => {
+
+  }, [])
+
   const submitSystem = () => {
+    const errors = validate(addNodeForm)
+    if (Object.keys(errors).length > 0) {
+      setNodeFormErrors({
+        ...nodeFormErrors,
+        ...errors
+      })
+      return
+    }
+
     const connections = get(addNodeForm, 'connections', {})
     const data = {
       description: get(addNodeForm, 'description', ''),
       name: get(addNodeForm, 'name', ''),
-      type: get(addNodeForm, 'type', '')
+      type: get(addNodeForm, 'type', ''),
+      url: get(addNodeForm, 'url', ''),
+      department: get(addNodeForm, 'department', '')
     }
+
     const node = Graph.makeNode({ connections, data })
     NodeManager.addNode({ key: node.id, ...addNodeForm })
     Graph.addNode(node)
@@ -120,28 +156,59 @@ export const AddNodeForm = props => {
     >
       <TextField
         label='Name'
+        placeholder='Choose a name'
+        errorMessage={nodeFormErrors.name}
+        required
+        onGetErrorMessage={(value => {
+          const newSystem = String(value).toLowerCase()
+          if (existingSystems.some(({ text }) => String(text).toLowerCase() === newSystem)) {
+            setNodeFormErrors({
+              ...nodeFormErrors,
+              name: `The ${value} system already exists`
+            })
+          } else {
+            setNodeFormErrors({
+              ...nodeFormErrors,
+              name: null
+            })
+          }
+        })}
         onChange={(event, value) => updateNodeForm({ path: 'name', value })}
         value={addNodeForm.name || ''}
       />
-      <Dropdown
-        label='System Type'
-        options={[
-          { key: 'oncampus', text: 'On Campus' },
-          { key: 'cloud', text: 'Cloud' },
-          { key: 'external', text: 'External' }
-        ]}
-        placeholder='Select a type'
+      <SystemType
+        required
+        errorMessage={nodeFormErrors.type}
         selectedKey={addNodeForm.type || null}
-        onChange={(event, value) => updateNodeForm({ path: 'type', value: value.key })}
+        onChange={(event, value) => {
+          updateNodeForm({ path: 'type', value: value.key })
+          setNodeFormErrors({
+            ...nodeFormErrors,
+            type: null
+          })
+        }}
+      />
+      <TextField
+        label='Department'
+        placeholder='Was this built for another department?'
+        onChange={(event, value) => updateNodeForm({ path: 'department', value })}
+        value={addNodeForm.department || null}
+      />
+      <TextField
+        label='URL'
+        placeholder='Is there a url to access this system?'
+        onChange={(event, value) => updateNodeForm({ path: 'url', value })}
+        value={addNodeForm.url || null}
       />
       <TextField
         label='Description'
+        placeholder='Enter some information others may want to know about this system'
         multiline
         rows={4}
         onChange={(event, value) => updateNodeForm({ path: 'description', value })}
         value={addNodeForm.description || ''}
       />
-      {renderConnections({ connections: state.connections, existingSystems, addNodeForm, updateNodeForm })}
+      {renderConnections({ connections, existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors })}
       <ActionButton
         onClick={addConnection}
         iconProps={{ iconName: 'Add' }}
@@ -149,9 +216,7 @@ export const AddNodeForm = props => {
         Add Connection
       </ActionButton>
       <Stack horizontal horizontalAlign='end' tokens={{ childrenGap: 12 }}>
-        <DefaultButton text='Cancel' onClick={() => {
-          dismiss()
-        }} />
+        <DefaultButton text='Cancel' onClick={dismiss} />
         <PrimaryButton text='Add System' onClick={submitSystem} />
       </Stack>
     </Panel>
