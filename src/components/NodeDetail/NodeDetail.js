@@ -18,7 +18,7 @@ const parseConnections = (node) => {
       .filter(edge => edge.node === node.id)
       .forEach(edge => {
         const to = get(nodes, `[${cur}].data.name`)
-        console.log(nodes)
+
         const type = get(edge, 'data.type.label')
         const read = get(edge, 'data.read')
         const write = get(edge, 'data.write')
@@ -54,8 +54,11 @@ export const NodeDetail = props => {
 
   useEvent('display-node-details', displayNode)
   const deselectActiveNode = useEvent('deselect-active-node')
-  const name = get(node, 'name', '')
-  const description = get(node, 'description', '')
+  const name = get(node, 'name', 'Very Unnamed System')
+  const description = get(node, 'data.description', 'No description has been entered.')
+  const department = get(node, 'data.department', 'No department has been entered.')
+  const url = get(node, 'data.url', `${name} has no url`)
+
   const connections = parseConnections(node)
 
   return (
@@ -74,6 +77,14 @@ export const NodeDetail = props => {
         <Stack tokens={{ childrenGap: 4 }}>
           <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Description</Text>
           <Text>{description}</Text>
+        </Stack>
+        <Stack tokens={{ childrenGap: 4 }}>
+          <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Department</Text>
+          <Text>{department}</Text>
+        </Stack>
+        <Stack tokens={{ childrenGap: 4 }}>
+          <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>URL</Text>
+          <Text>{url}</Text>
         </Stack>
         <Stack>
           <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Connections</Text>
