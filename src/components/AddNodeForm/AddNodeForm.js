@@ -1,6 +1,6 @@
 import React, { useState, useReducer } from 'react'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
-import { NodeManager } from '../../util'
+import { NodeManager, Graph } from '../../util'
 import { TextField } from 'office-ui-fabric-react/lib/TextField'
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
@@ -17,6 +17,9 @@ const addNodeReducer = (state, action) => {
   set(addNodeState, action.path, action.value)
   return addNodeState
 }
+
+// URL
+// Department
 
 const connectionReducer = (state, action) => {
   switch (action.type) {
@@ -75,7 +78,7 @@ const Connection = props => {
       <Dropdown
         label='Connected To'
         options={existingSystems}
-        value={get(addNodeForm, `connections[${id}].connectedTo`)}
+        selectedKey={get(addNodeForm, `connections[${id}].connectedTo`, null)}
         onChange={(event, value) => {
           updateNodeForm({
             path: `connections[${id}].connectedTo`,
@@ -91,7 +94,7 @@ const Connection = props => {
           { key: 'builtin', text: 'Built In Interface' },
           { key: 'custom', text: 'Custom Interface' }
         ]}
-        value={get(addNodeForm, `connections[${id}].connectionType`)}
+        selectedKey={get(addNodeForm, `connections[${id}].connectionType`, null)}
         onChange={(event, value) => {
           updateNodeForm({
             path: `connections[${id}].connectionType`,
@@ -155,7 +158,8 @@ export const AddNodeForm = props => {
           { key: 'cloud', text: 'Cloud' },
           { key: 'external', text: 'External' }
         ]}
-        value={addNodeForm.type || ''}
+        placeholder='Select a type'
+        selectedKey={addNodeForm.type || null}
         onChange={(event, value) => updateNodeForm({ path: 'type', value: value.key })}
       />
       <TextField
@@ -186,6 +190,15 @@ export const AddNodeForm = props => {
         }} />
         <PrimaryButton text='Add System' onClick={() => {
           NodeManager.addNode({ key: (addNodeForm.name || '').toLowerCase(), ...addNodeForm })
+          const connections = get(addNodeForm, 'connections', {})
+          const data = {
+            description: get(addNodeForm, 'description', ''),
+            name: get(addNodeForm, 'name', ''),
+            type: get(addNodeForm, 'type', '')
+          }
+          const node = Graph.makeNode({ connections, data })
+          Graph.addNode(node)
+
           broadcastNodeSave()
           resetConnections()
           resetForm()

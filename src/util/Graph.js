@@ -1,6 +1,8 @@
 import omit from 'lodash.omit'
+import get from 'lodash.get'
+import uuid from 'uuid/v4'
 
-export const Graph = () => {
+const _Graph = () => {
   const _get = (key, defaultValue) => JSON.parse(localStorage.getItem(key)) || defaultValue
   const _set = (key, value) => localStorage.setItem(key, JSON.stringify(value))
 
@@ -9,7 +11,7 @@ export const Graph = () => {
   }
 
   const getNodes = async () => {
-    return _get('_nodes', [])
+    return _get('_nodes', {})
   }
 
   const setEdges = async (edges) => {
@@ -17,7 +19,7 @@ export const Graph = () => {
   }
 
   const setNodes = async (nodes) => {
-    return _set('nodes', nodes)
+    return _set('_nodes', nodes)
   }
 
   const addNode = async (node) => {
@@ -25,7 +27,7 @@ export const Graph = () => {
     const _nodes = await getNodes()
     const _edges = await getEdges()
 
-    _nodes.push(node)
+    _nodes[node.id] = node
     _edges[node.id] = []
 
     await setEdges(_edges)
@@ -37,8 +39,8 @@ export const Graph = () => {
 
     const _edges = await getEdges()
 
-    _edges[node1.id].push({ node: node2, data })
-    _edges[node2.id].push({ node: node1, data })
+    _edges[node1.id].push({ node: node2.id, data })
+    _edges[node2.id].push({ node: node1.id, data })
 
     await setEdges(_edges)
   }
@@ -48,7 +50,7 @@ export const Graph = () => {
 
     const _edges = await getEdges()
 
-    _edges[node1.id].push({ node: node2, data })
+    _edges[node1.id].push({ node: node2.id, data })
 
     await setEdges(_edges)
   }
@@ -73,11 +75,50 @@ export const Graph = () => {
     await setEdges(_updatedEdges)
   }
 
+  const makeNode = ({ data, connections }) => {
+    const node = {
+      id: uuid(),
+      edges: [],
+      data: {
+        ...(data || {})
+      }
+    }
+
+    const connectionKeys = Object.keys(connections || {})
+
+    if (connectionKeys.length <= 0) return node
+
+    connectionKeys.forEach(key => {
+      const info = get(connections, `${[key]}.connectedTo`, null)
+      if (!info) throw new Error('You cannot make a connection without a target')
+      const type = get(connections, `${[key]}.connectionType`, null)
+      if (!type) throw new Error('You cannot make a connection without a type')
+
+      const data = get(connections, `[${key}].data`, {})
+
+      node.edges.push({
+        id: info.key,
+        data: {
+          ...data,
+          type: {
+            id: type.key,
+            label: type.text
+          }
+        }
+      })
+    })
+
+    return node
+  }
+
   return {
     addNode,
     addEdge,
     addDirectedEdge,
     removeEdge,
-    removeDirectedEdge
+    removeDirectedEdge,
+    makeNode
   }
 }
+
+export const Graph = _Graph()
