@@ -6,42 +6,40 @@ import { useEvent } from '../../hooks'
 import { NodeManager } from '../../util'
 import get from 'lodash.get'
 
-const pullNodeConnections = (node, target) => {
-  const connections = get(node, 'connections', {})
-  const keys = Object.keys(connections)
-  const nodeConnections = keys.reduce((acc, cur) => {
-    let to = get(node, `connections[${cur}].connectedTo.text`, '')
-    const type = get(node, `connections[${cur}].connectionType.text`, '')
-    if (target && to === target) {
-      to = get(node, 'name', '')
-      acc.push(<Connection to={to} type={type} />)
-      return acc
-    } else if (!target) {
-      acc.push(<Connection to={to} type={type} />)
-    }
-
-    return acc
-  }, [])
-
-  return nodeConnections
-}
-
 const parseConnections = (node) => {
   if (!node) return []
-  const nodes = NodeManager.getNodes()
-  const connectionsFromThisNode = pullNodeConnections(node)
+  const edges = NodeManager.getEdges()
+  const nodes = NodeManager.getNodesObject()
 
-  const connectionsToThisNode = nodes.reduce((acc, cur) => {
-    const connections = pullNodeConnections(cur, node.name)
-    return [...acc, ...connections]
+  const edgeKeys = Object.keys(edges || {})
+  return edgeKeys.reduce((acc, cur) => {
+    const nodeEdges = edges[cur]
+    nodeEdges
+      .filter(edge => edge.node === node.id)
+      .forEach(edge => {
+        const to = get(nodes, `[${cur}].data.name`)
+        console.log(nodes)
+        const type = get(edge, 'data.type.label')
+        const read = get(edge, 'data.read')
+        const write = get(edge, 'data.write')
+
+        acc.push(<Connection to={to} read={read} write={write} type={type} />)
+      })
+    return acc
   }, [])
-
-  return [...connectionsFromThisNode, ...connectionsToThisNode]
 }
 
-const Connection = ({ to, type }) => {
+const Connection = ({ to, type, read, write }) => {
+  let readWriteStatus = ''
+  if (read && write) {
+    readWriteStatus = '(Read and Write)'
+  } else if (read) {
+    readWriteStatus = '(Read)'
+  } else if (write) {
+    readWriteStatus = '(Write)'
+  }
   return (
-    <Text>{to} - {type}</Text>
+    <Text>{to} - {type} {readWriteStatus}</Text>
   )
 }
 

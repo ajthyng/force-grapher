@@ -1,6 +1,10 @@
 const _NodeManager = () => {
   const _get = (key, defaultValue) => JSON.parse(localStorage.getItem(key)) || defaultValue
 
+  const getNodesObject = () => {
+    return _get('_nodes', {})
+  }
+
   const getNodes = () => {
     const nodes = _get('_nodes', {})
     const nodeKeys = Object.keys(nodes)
@@ -18,6 +22,7 @@ const _NodeManager = () => {
 
   return {
     getEdges,
+    getNodesObject,
     getNodes
   }
 }
