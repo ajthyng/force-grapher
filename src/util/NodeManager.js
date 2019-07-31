@@ -1,20 +1,23 @@
 const _NodeManager = () => {
   const _get = (key, defaultValue) => JSON.parse(localStorage.getItem(key)) || defaultValue
-  const _set = (key, value) => localStorage.setItem(key, JSON.stringify(value))
 
-  const addNode = node => {
-    const nodes = _get('nodes', [])
-    nodes.push(node)
-    _set('nodes', nodes)
+  const getNodes = () => {
+    const nodes = _get('_nodes', {})
+    const nodeKeys = Object.keys(nodes)
+
+    return nodeKeys.reduce((acc, cur) => {
+      acc.push(nodes[cur])
+      return acc
+    }, [])
   }
 
-  const getNodes = node => {
-    const nodes = _get('nodes', [])
-    return nodes
+  const getEdges = () => {
+    const edges = _get('_edges', {})
+    return edges
   }
 
   return {
-    addNode,
+    getEdges,
     getNodes
   }
 }

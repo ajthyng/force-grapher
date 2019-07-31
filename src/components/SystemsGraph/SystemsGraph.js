@@ -8,27 +8,29 @@ const systemsReducer = (state, action) => {
   switch (action.type) {
     case 'update':
       const nodes = NodeManager.getNodes()
-      return buildGraphData(nodes)
+      const edges = NodeManager.getEdges()
+      return buildGraphData(nodes, edges)
     default:
       return state
   }
 }
 
 const getLinkColor = (type) => {
-  switch (type.key) {
-    case 'oneway':
-    case 'twoway':
-      return '#A0A0A0'
+  switch (type) {
     case 'custom':
-      return '#04B080'
+      return '#4b721d'
     case 'builtin':
-      return '#303030'
+      return '#deb407'
     default:
       return '#A0A0A0'
   }
 }
 
-const buildGraphData = nodes => {
+const buildGraphData = (nodes, edges) => {
+  const graphData = {
+    nodes: [],
+    links: []
+  }
   if (!Array.isArray(nodes)) {
     return {
       nodes: [],
@@ -36,48 +38,40 @@ const buildGraphData = nodes => {
     }
   }
 
-  const graphNodes = nodes.map(node => ({
-    ...node,
-    id: node.key,
-    name: node.name,
-    color: '#303030'
-  }))
-
-  const graphLinks = nodes.reduce((links, node) => {
-    const keys = Object.keys(get(node, 'connections', {}))
-    keys.forEach(key => {
-      const info = get(node, `connections[${key}].connectedTo`, {})
-      const type = get(node, `connections[${key}].connectionType`, {})
-
-      if (info.key && node.key) {
-        links.push({
-          source: node.key,
-          target: info.key,
-          color: getLinkColor(type),
-          type
-        })
-
-        if (type.key === 'twoway') {
-          links.push({
-            source: info.key,
-            target: node.key,
-            color: getLinkColor(type),
-            type
-          })
-        }
-      }
+  const nodeKeys = Object.keys(nodes || {})
+  nodeKeys.forEach(key => {
+    const node = nodes[key]
+    console.log(node)
+    graphData.nodes.push({
+      id: node.id,
+      type: node.data.type,
+      name: node.data.name,
+      data: {
+        ...node.data
+      },
+      color: '#303030'
     })
-    return links
-  }, [])
+  })
 
-  return {
-    nodes: graphNodes,
-    links: graphLinks
-  }
+  const edgeKeys = Object.keys(edges || {})
+  edgeKeys.forEach(nodeId => {
+    const edgeList = edges[nodeId]
+
+    edgeList.forEach(edge => {
+      graphData.links.push({
+        source: nodeId,
+        target: edge.node,
+        color: getLinkColor(get(edge, 'data.type.id')),
+        type: get(edge, 'data.type', {})
+      })
+    })
+  })
+
+  return graphData
 }
 
 export const SystemsGraph = props => {
-  const [systems, systemsDispatch] = useReducer(systemsReducer, buildGraphData(NodeManager.getNodes()))
+  const [systems, systemsDispatch] = useReducer(systemsReducer, buildGraphData(NodeManager.getNodes(), NodeManager.getEdges()))
   const [activeNode, setActiveNode] = useState()
   const systemsGraph = useRef()
 
@@ -106,6 +100,7 @@ export const SystemsGraph = props => {
       linkDirectionalArrowLength={5}
       linkDirectionalArrowRelPos={0.5}
       linkCurvature={0.25}
+      linkColor={link => link.color}
       nodeVal={4.5}
       onNodeClick={node => {
         if (node.id === get(activeNode, 'id', null)) {
@@ -114,7 +109,6 @@ export const SystemsGraph = props => {
         }
         setActiveNode(node)
       }}
-      linkAutoColorBy={link => console.log('LINK: ', link)}
       nodeCanvasObject={(node, ctx, globalScale) => {
         const isActive = get(activeNode, 'id', null) === node.id
         const label = node.name

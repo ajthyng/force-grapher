@@ -141,9 +141,9 @@ const _Graph = () => {
 
       if (read && write) {
         await addEdge(node1, node2, get(edge, 'data'))
-      } else if (write) {
-        await addDirectedEdge(node2, node1, get(edge, 'data'))
       } else if (read) {
+        await addDirectedEdge(node2, node1, get(edge, 'data'))
+      } else if (write) {
         await addDirectedEdge(node1, node2, get(edge, 'data'))
       }
     }

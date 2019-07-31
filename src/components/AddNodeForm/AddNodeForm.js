@@ -48,7 +48,7 @@ const connectionReducer = (connections, action) => {
 
 const getSystems = () => {
   const nodes = NodeManager.getNodes()
-  return nodes.map(node => ({ key: node.key, text: node.name }))
+  return nodes.map(node => ({ key: node.id, text: node.data.name }))
 }
 
 const renderConnections = ({ connections, existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors }) => {
@@ -80,7 +80,7 @@ const validate = (addNodeForm) => {
 }
 
 export const AddNodeForm = props => {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const [existingSystems, setExistingSystems] = useState(getSystems())
   const [nodeFormErrors, setNodeFormErrors] = useState({})
   const [connections, connDispatch] = useReducer(connectionReducer, [])
@@ -125,7 +125,6 @@ export const AddNodeForm = props => {
 
     const node = Graph.makeNode({ connections, data })
 
-    NodeManager.addNode({ key: node.id, ...addNodeForm })
     await Graph.addNode(node)
 
     broadcastNodeSave()
