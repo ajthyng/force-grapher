@@ -4,12 +4,12 @@ import { NodeManager, Graph } from '../../util'
 import { TextField } from 'office-ui-fabric-react/lib/TextField'
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
-import { ActionButton, PrimaryButton, DefaultButton, IconButton } from 'office-ui-fabric-react'
+import { ActionButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
 import uuid from 'uuid/v4'
 import set from 'lodash.set'
-import styled from 'styled-components'
+import { Connection } from './Connection'
 
 const addNodeReducer = (state, action) => {
   if (action.path === '') return {}
@@ -32,8 +32,6 @@ const connectionReducer = (state, action) => {
           <Connection
             key={id}
             id={id}
-            addNodeForm={action.addNodeForm}
-            updateNodeForm={action.updateNodeForm}
             handleRemove={() => action.dispatch({ type: 'remove', id })}
           />
         ]
@@ -54,65 +52,13 @@ const connectionReducer = (state, action) => {
   }
 }
 
-const ConnectionContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  & > .ms-Dropdown-container {
-    flex: 1;
-    margin-right: 4px;
-  }
-
-  & > .ms-Button--icon {
-    align-self: flex-end;
-  }
-`
-
-const Connection = props => {
-  const { handleRemove, id, addNodeForm, existingSystems, updateNodeForm } = props
-  const updateSystemsList = () => console.log('update')
-  useEvent('save-node-entry', updateSystemsList)
-  return (
-    <ConnectionContainer>
-      <Dropdown
-        label='Connected To'
-        options={existingSystems}
-        selectedKey={get(addNodeForm, `connections[${id}].connectedTo`, null)}
-        onChange={(event, value) => {
-          updateNodeForm({
-            path: `connections[${id}].connectedTo`,
-            value: { key: value.key, text: value.text }
-          })
-        }}
-      />
-      <Dropdown
-        label='Connection Type'
-        options={[
-          { key: 'oneway', text: 'One Way Interface' },
-          { key: 'twoway', text: 'Two Way Interface' },
-          { key: 'builtin', text: 'Built In Interface' },
-          { key: 'custom', text: 'Custom Interface' }
-        ]}
-        selectedKey={get(addNodeForm, `connections[${id}].connectionType`, null)}
-        onChange={(event, value) => {
-          updateNodeForm({
-            path: `connections[${id}].connectionType`,
-            value: { key: value.key, text: value.text, color: value.color }
-          })
-        }}
-      />
-      <IconButton
-        iconProps={{ iconName: 'Delete' }}
-        onClick={handleRemove}
-      />
-    </ConnectionContainer>
-  )
-}
-
 const getSystems = () => {
   const nodes = NodeManager.getNodes()
   return nodes.map(node => ({ key: node.key, text: node.name }))
+}
+
+const renderConnections = ({ connections, existingSystems, addNodeForm, updateNodeForm }) => {
+  return connections.map(conn => React.cloneElement(conn, { existingSystems, addNodeForm, updateNodeForm }))
 }
 
 export const AddNodeForm = props => {
@@ -123,6 +69,32 @@ export const AddNodeForm = props => {
   const toggle = () => setIsOpen(!isOpen)
   const resetForm = () => updateNodeForm({ path: '', value: {} })
   const resetConnections = () => connDispatch({ type: 'reset' })
+  const addConnection = () => {
+    connDispatch({
+      type: 'add',
+      dispatch: connDispatch,
+      existingSystems,
+      addNodeForm,
+      updateNodeForm
+    })
+  }
+
+  const submitSystem = () => {
+    const connections = get(addNodeForm, 'connections', {})
+    const data = {
+      description: get(addNodeForm, 'description', ''),
+      name: get(addNodeForm, 'name', ''),
+      type: get(addNodeForm, 'type', '')
+    }
+    const node = Graph.makeNode({ connections, data })
+    NodeManager.addNode({ key: node.id, ...addNodeForm })
+    Graph.addNode(node)
+
+    broadcastNodeSave()
+    resetConnections()
+    resetForm()
+  }
+
   const [addNodeForm, updateNodeForm] = useReducer(addNodeReducer, {})
 
   useEvent('toggle-left-panel', toggle)
@@ -169,17 +141,9 @@ export const AddNodeForm = props => {
         onChange={(event, value) => updateNodeForm({ path: 'description', value })}
         value={addNodeForm.description || ''}
       />
-      {state.connections.map(conn => React.cloneElement(conn, { existingSystems }))}
+      {renderConnections({ connections: state.connections, existingSystems, addNodeForm, updateNodeForm })}
       <ActionButton
-        onClick={() => {
-          connDispatch({
-            type: 'add',
-            dispatch: connDispatch,
-            existingSystems,
-            addNodeForm,
-            updateNodeForm
-          })
-        }}
+        onClick={addConnection}
         iconProps={{ iconName: 'Add' }}
       >
         Add Connection
@@ -188,21 +152,7 @@ export const AddNodeForm = props => {
         <DefaultButton text='Cancel' onClick={() => {
           dismiss()
         }} />
-        <PrimaryButton text='Add System' onClick={() => {
-          NodeManager.addNode({ key: (addNodeForm.name || '').toLowerCase(), ...addNodeForm })
-          const connections = get(addNodeForm, 'connections', {})
-          const data = {
-            description: get(addNodeForm, 'description', ''),
-            name: get(addNodeForm, 'name', ''),
-            type: get(addNodeForm, 'type', '')
-          }
-          const node = Graph.makeNode({ connections, data })
-          Graph.addNode(node)
-
-          broadcastNodeSave()
-          resetConnections()
-          resetForm()
-        }} />
+        <PrimaryButton text='Add System' onClick={submitSystem} />
       </Stack>
     </Panel>
   )
