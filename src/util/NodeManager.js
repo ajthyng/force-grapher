@@ -1,6 +1,6 @@
 const _NodeManager = () => {
   const _get = (key, defaultValue) => JSON.parse(localStorage.getItem(key)) || defaultValue
-
+  const _set = (key, value) => localStorage.setItem(key, JSON.stringify(value))
   const getNodesObject = () => {
     return _get('_nodes', {})
   }
@@ -16,13 +16,18 @@ const _NodeManager = () => {
   }
 
   const getEdges = () => {
-    const edges = _get('_edges', {})
-    return edges
+    return _get('_edges', {})
+  }
+
+  const saveUploadedData = ({ edges, nodes }) => {
+    _set('_edges', edges)
+    _set('_nodes', nodes)
   }
 
   return {
     getEdges,
     getNodesObject,
+    saveUploadedData,
     getNodes
   }
 }
