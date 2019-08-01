@@ -131,7 +131,10 @@ export const SystemsGraph = props => {
         const node = get(params, `nodes[0]`, null)
         if (node) {
           if (!network.current.isCluster(node)) {
-            setActiveNode(node)
+            const matchingNode = systems.nodes.find(({ id }) => id === node)
+            if (matchingNode) {
+              setActiveNode(matchingNode)
+            }
           }
         }
       })
