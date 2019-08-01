@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useState, useRef } from 'react'
-import ForceGraph2D from 'react-force-graph-2d'
+import { Network, DataSet } from 'vis-network'
 import { NodeManager } from '../../util'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
@@ -26,30 +26,43 @@ const getLinkColor = (type) => {
   }
 }
 
+const getShape = (type) => {
+  switch (type) {
+    case 'cloud':
+      return { size: 40, widthConstraint: { minimum: 40, maximum: 100 } }
+    case 'external':
+      return { shape: 'circle', size: 40, widthConstraint: { minimum: 40, maximum: 100 } }
+    case 'oncampus':
+    default:
+      return { shape: 'box', size: 40, widthConstraint: { minimum: 40, maximum: 100 } }
+  }
+}
+
 const buildGraphData = (nodes, edges) => {
   const graphData = {
     nodes: [],
-    links: []
+    edges: []
   }
   if (!Array.isArray(nodes)) {
     return {
       nodes: [],
-      links: []
+      edges: []
     }
   }
 
   const nodeKeys = Object.keys(nodes || {})
   nodeKeys.forEach(key => {
     const node = nodes[key]
-    console.log(node)
+
     graphData.nodes.push({
       id: node.id,
       type: node.data.type,
-      name: node.data.name,
+      ...getShape(node.data.type),
+      label: node.data.name,
       data: {
         ...node.data
       },
-      color: '#303030'
+      color: '#FFFFFF'
     })
   })
 
@@ -58,11 +71,12 @@ const buildGraphData = (nodes, edges) => {
     const edgeList = edges[nodeId]
 
     edgeList.forEach(edge => {
-      graphData.links.push({
-        source: nodeId,
-        target: edge.node,
+      graphData.edges.push({
+        from: nodeId,
+        to: edge.node,
         color: getLinkColor(get(edge, 'data.type.id')),
-        type: get(edge, 'data.type', {})
+        type: get(edge, 'data.type', {}),
+        arrows: 'to'
       })
     })
   })
@@ -73,7 +87,9 @@ const buildGraphData = (nodes, edges) => {
 export const SystemsGraph = props => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, buildGraphData(NodeManager.getNodes(), NodeManager.getEdges()))
   const [activeNode, setActiveNode] = useState()
-  const systemsGraph = useRef()
+
+  const network = useRef()
+  const graph = useRef()
 
   const updateGraph = () => {
     systemsDispatch({ type: 'update' })
@@ -82,53 +98,48 @@ export const SystemsGraph = props => {
   const displayNodeDetails = useEvent('display-node-details')
 
   useEffect(() => {
-    systemsGraph.current.d3Force('charge').strength(-150)
-    systemsGraph.current.zoom(4)
-  }, [systems.links])
-
-  useEffect(() => {
     if (activeNode) displayNodeDetails(activeNode)
   }, [activeNode, displayNodeDetails])
 
   useEvent('save-node-entry', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
 
-  return (
-    <ForceGraph2D
-      ref={systemsGraph}
-      graphData={systems}
-      linkDirectionalArrowLength={5}
-      linkDirectionalArrowRelPos={0.5}
-      linkCurvature={0.25}
-      linkColor={link => link.color}
-      nodeVal={4.5}
-      onNodeClick={node => {
-        if (node.id === get(activeNode, 'id', null)) {
-          setActiveNode(null)
-          return
+  useEffect(() => {
+    const nodes = new DataSet(systems.nodes)
+    const edges = new DataSet(systems.edges)
+
+    const options = {
+      physics: {
+        solver: 'repulsion'
+      }
+    }
+
+    const data = { nodes, edges }
+    if (!network.current) {
+      network.current = new Network(graph.current, data, options)
+      network.current.on('oncontext', event => {
+        const node = network.current.getNodeAt(event.pointer.DOM)
+        if (network.current.isCluster(node)) {
+          network.current.openCluster(node)
+        } else {
+          const matchingNode = systems.nodes.find(({ id }) => id === node)
+          if (!matchingNode) return
+          network.current.clusterByConnection(node, { clusterNodeProperties: { label: matchingNode.data.name } })
         }
-        setActiveNode(node)
-      }}
-      nodeCanvasObject={(node, ctx, globalScale) => {
-        const isActive = get(activeNode, 'id', null) === node.id
-        const label = node.name
-        const fontSize = 16 / globalScale
-        ctx.font = `${isActive ? 'bold ' : ''}${fontSize}px Sans-Serif`
-        const textWidth = ctx.measureText(label).width
-        const innerSquareDimensions = [textWidth, fontSize].map(n => n + fontSize * 3)
-        const outerSquareDimensions = [textWidth, fontSize].map(n => n + fontSize * (isActive ? 3.4 : 3.2))
+      })
+      network.current.on('selectNode', params => {
+        const node = get(params, `nodes[0]`, null)
+        if (node) {
+          if (!network.current.isCluster(node)) {
+            setActiveNode(node)
+          }
+        }
+      })
+      document.addEventListener('contextmenu', e => e.preventDefault(), false)
+    } else {
+      network.current.setData(data)
+    }
+  }, [systems])
 
-        ctx.fillStyle = isActive ? '#005481' : node.color
-        ctx.fillRect(node.x - outerSquareDimensions[0] / 2, node.y - outerSquareDimensions[1] / 2, ...outerSquareDimensions)
-        ctx.fillStyle = 'rgba(255, 255, 255, 1)'
-        ctx.fillRect(node.x - innerSquareDimensions[0] / 2, node.y - innerSquareDimensions[1] / 2, ...innerSquareDimensions)
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillStyle = isActive ? '#005481' : node.color
-        ctx.fillText(label, node.x, node.y)
-
-        return ctx
-      }}
-    />
-  )
+  return <div style={{ height: '100%' }} ref={graph} id='graph' />
 }
