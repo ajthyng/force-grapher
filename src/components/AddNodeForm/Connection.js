@@ -22,13 +22,8 @@ const ConnectionContainer = styled.div`
     margin-right: 4px;
   }
 
-  & > .ms-Dropdown-container:first-child {
-    margin-top: 8px;
-  }
-
   & > .ms-Button--icon {
-    position: absolute;
-    right: 20px;
+    align-self: flex-end;
   }
 `
 
@@ -52,6 +47,19 @@ export const Connection = props => {
 
   return (
     <ConnectionContainer>
+      <IconButton
+        iconProps={{ iconName: 'ChromeClose' }}
+        onClick={() => {
+          const connection = get(addNodeForm, `connections[${id}]`, null)
+          if (connection) {
+            updateNodeForm({
+              path: `connections[${id}]`,
+              type: 'remove'
+            })
+          }
+          handleRemove()
+        }}
+      />
       <Dropdown
         label='Connected To'
         placeholder={`What does this system connect to?`}
@@ -97,19 +105,6 @@ export const Connection = props => {
             path: `connections[${id}].${path}`,
             value
           })
-        }}
-      />
-      <IconButton
-        iconProps={{ iconName: 'ChromeClose' }}
-        onClick={() => {
-          const connection = get(addNodeForm, `connections[${id}]`, null)
-          if (connection) {
-            updateNodeForm({
-              path: `connections[${id}]`,
-              type: 'remove'
-            })
-          }
-          handleRemove()
         }}
       />
     </ConnectionContainer>

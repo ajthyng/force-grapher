@@ -80,7 +80,7 @@ const validate = (addNodeForm) => {
 }
 
 export const AddNodeForm = props => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
   const [existingSystems, setExistingSystems] = useState(getSystems())
   const [nodeFormErrors, setNodeFormErrors] = useState({})
   const [connections, connDispatch] = useReducer(connectionReducer, [])
@@ -149,6 +149,13 @@ export const AddNodeForm = props => {
       headerText='Add a New System Node'
       isOpen={isOpen}
       onDismiss={() => setIsOpen(false)}
+      isFooterAtBottom
+      onRenderFooterContent={() => (
+        <Stack horizontal horizontalAlign='space-between' tokens={{ childrenGap: 12 }}>
+          <DefaultButton text='Cancel' onClick={dismiss} />
+          <PrimaryButton text='Add System' onClick={submitSystem} />
+        </Stack>
+      )}
       type={PanelType.medium}
     >
       <TextField
@@ -212,10 +219,6 @@ export const AddNodeForm = props => {
       >
         Add Connection
       </ActionButton>
-      <Stack horizontal horizontalAlign='end' tokens={{ childrenGap: 12 }}>
-        <DefaultButton text='Cancel' onClick={dismiss} />
-        <PrimaryButton text='Add System' onClick={submitSystem} />
-      </Stack>
     </Panel>
   )
 }
