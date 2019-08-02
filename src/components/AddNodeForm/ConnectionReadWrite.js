@@ -17,7 +17,7 @@ export const ConnectionReadWrite = props => {
   const { read, write, onChange } = props
 
   return (
-    <Stack style={{ marginRight: 8, marginLeft: 8, alignSelf: 'center' }} verticalAlign='space-between' tokens={{ childrenGap: 4 }}>
+    <Stack style={{ marginRight: 8, marginTop: 8 }} verticalAlign='space-between' tokens={{ childrenGap: 4 }}>
       <Checkbox checked={read} onChange={(event, value) => {
         if (canChange('read', value)(read, write)) {
           onChange('read', value)

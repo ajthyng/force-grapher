@@ -8,16 +8,27 @@ import { IconButton } from 'office-ui-fabric-react'
 const ConnectionContainer = styled.div`
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  padding-top: 16px;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 8px;
+  margin-top: 12px;
+  border: 1px solid rgb(138, 136, 134);
+  box-sizing: border-box;
+  border-radius: 1px;
 
   & > .ms-Dropdown-container {
     flex: 1;
+    width: 100%;
     margin-right: 4px;
   }
 
+  & > .ms-Dropdown-container:first-child {
+    margin-top: 8px;
+  }
+
   & > .ms-Button--icon {
-    align-self: flex-end;
+    position: absolute;
+    right: 20px;
   }
 `
 
@@ -43,7 +54,7 @@ export const Connection = props => {
     <ConnectionContainer>
       <Dropdown
         label='Connected To'
-        placeholder={`What does ${addNodeForm.name || 'this system'} connect to?`}
+        placeholder={`What does this system connect to?`}
         options={existingSystems}
         errorMessage={targetError}
         selectedKey={selectedTarget}
@@ -89,7 +100,7 @@ export const Connection = props => {
         }}
       />
       <IconButton
-        iconProps={{ iconName: 'Delete' }}
+        iconProps={{ iconName: 'ChromeClose' }}
         onClick={() => {
           const connection = get(addNodeForm, `connections[${id}]`, null)
           if (connection) {

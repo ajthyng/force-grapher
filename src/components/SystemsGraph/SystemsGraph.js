@@ -84,7 +84,7 @@ const buildGraphData = (nodes, edges) => {
   return graphData
 }
 
-export const SystemsGraph = props => {
+export const SystemsGraph = () => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, buildGraphData(NodeManager.getNodes(), NodeManager.getEdges()))
   const [activeNode, setActiveNode] = useState()
 
@@ -104,14 +104,16 @@ export const SystemsGraph = props => {
   useEvent('save-node-entry', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
 
+  console.log('render graph')
   useEffect(() => {
     const nodes = new DataSet(systems.nodes)
     const edges = new DataSet(systems.edges)
-
+    console.log('graph use effect')
     const options = {
       physics: {
         solver: 'repulsion'
-      }
+      },
+      autoResize: false
     }
 
     const data = { nodes, edges }
