@@ -28,7 +28,7 @@ const ConnectionContainer = styled.div`
 `
 
 export const Connection = props => {
-  const { handleRemove, id, addNodeForm, nodeFormErrors, setNodeFormErrors, existingSystems, updateNodeForm } = props
+  const { handleRemove, id, edit, addNodeForm, nodeFormErrors, setNodeFormErrors, existingSystems, updateNodeForm } = props
   const selectedTarget = get(addNodeForm, `connections[${id}].connectedTo.key`, null)
   const selectedType = get(addNodeForm, `connections[${id}].connectionType.key`, null)
 
@@ -39,10 +39,12 @@ export const Connection = props => {
   const typeError = get(nodeFormErrors, `[${id}].type`)
 
   useEffect(() => {
-    updateNodeForm({
-      path: `connections[${id}].read`,
-      value: true
-    })
+    if (!edit) {
+      updateNodeForm({
+        path: `connections[${id}].read`,
+        value: true
+      })
+    }
   }, [updateNodeForm, id])
 
   return (
@@ -71,10 +73,13 @@ export const Connection = props => {
             path: `connections[${id}].connectedTo`,
             value: { key: value.key, text: value.text }
           })
-          setNodeFormErrors({
-            ...nodeFormErrors,
-            [id]: { type: null }
-          })
+          if (`${id}` in nodeFormErrors) {
+            const errors = {
+              ...nodeFormErrors
+            }
+            delete errors[id]
+            setNodeFormErrors(errors)
+          }
         }}
       />
       <Dropdown
@@ -91,10 +96,13 @@ export const Connection = props => {
             path: `connections[${id}].connectionType`,
             value: { key: value.key, text: value.text, color: value.color }
           })
-          setNodeFormErrors({
-            ...nodeFormErrors,
-            [id]: { type: null }
-          })
+          if (`${id}` in nodeFormErrors) {
+            const errors = {
+              ...nodeFormErrors
+            }
+            delete errors[id]
+            setNodeFormErrors(errors)
+          }
         }}
       />
       <ConnectionReadWrite

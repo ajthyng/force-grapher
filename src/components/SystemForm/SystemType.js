@@ -2,7 +2,9 @@ import React from 'react'
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
 
 const areEqual = (prevProps, nextProps) => {
-  return prevProps.selectedKey === nextProps.selectedKey
+  const keysUnchanged = prevProps.selectedKey === nextProps.selectedKey
+  const errorUnchanged = prevProps.errorMessage === nextProps.errorMessage
+  return keysUnchanged && errorUnchanged
 }
 
 export const SystemType = React.memo(props => {

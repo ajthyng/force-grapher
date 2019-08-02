@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { SystemsGraph, NodeDetail, AddNodeForm, CommandBar } from './components'
+import { SystemsGraph, NodeDetail, SystemForm, CommandBar } from './components'
 
 const Page = styled.div`
   background-color: #e8e3db;
@@ -14,7 +14,7 @@ function App () {
     <Page>
       <SystemsGraph />
       <CommandBar />
-      <AddNodeForm />
+      <SystemForm />
       <NodeDetail />
     </Page>
   )

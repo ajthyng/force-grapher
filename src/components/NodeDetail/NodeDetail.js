@@ -3,10 +3,17 @@ import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
 import { IconButton } from 'office-ui-fabric-react'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
 import { Text } from 'office-ui-fabric-react/lib/Text'
+import styled from 'styled-components'
+import get from 'lodash.get'
 import { useEvent } from '../../hooks'
 import { NodeManager } from '../../util'
-import get from 'lodash.get'
+import NodeDetailView from './NodeDetailView'
 
+const CustomPanel = styled(Panel)`
+  & > .ms-Panel-main {
+    transition: width 300ms ease-in-out;
+  }
+`
 const parseConnections = (node) => {
   if (!node) return []
   const edges = NodeManager.getEdges()
@@ -54,6 +61,7 @@ export const NodeDetail = props => {
   const closePanel = () => setIsOpen(false)
 
   useEvent('display-node-details', displayNode)
+  const editSystem = useEvent('edit-system-panel')
   const deselectActiveNode = useEvent('deselect-active-node')
   const name = get(node, 'data.name', 'Very Unnamed System')
   const description = get(node, 'data.description', 'No description has been entered.')
@@ -61,9 +69,14 @@ export const NodeDetail = props => {
   const url = get(node, 'data.url', `${name} has no url`)
 
   const connections = parseConnections(node)
+  const handleEdit = () => {
+    editSystem(node)
+    setIsOpen(false)
+    deselectActiveNode()
+  }
 
   return (
-    <Panel
+    <CustomPanel
       isOpen={isOpen}
       onDismiss={() => {
         deselectActiveNode()
@@ -73,7 +86,12 @@ export const NodeDetail = props => {
         return (
           <Stack horizontal tokens={{ childrenGap: 12 }}>
             <Text variant='xLarge' style={{ marginLeft: 16, marginBottom: 12 }}>{props.headerText}</Text>
-            <IconButton iconProps={{ iconName: 'Edit' }} />
+            <IconButton
+              iconProps={{
+                iconName: 'Edit'
+              }}
+              onClick={handleEdit}
+            />
           </Stack>
         )
       }}
@@ -82,24 +100,12 @@ export const NodeDetail = props => {
       customWidth={400}
       headerText={name}
     >
-      <Stack tokens={{ childrenGap: 8 }}>
-        <Stack tokens={{ childrenGap: 4 }}>
-          <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Description</Text>
-          <Text>{description}</Text>
-        </Stack>
-        <Stack tokens={{ childrenGap: 4 }}>
-          <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Department</Text>
-          <Text>{department}</Text>
-        </Stack>
-        <Stack tokens={{ childrenGap: 4 }}>
-          <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>URL</Text>
-          <Text>{url}</Text>
-        </Stack>
-        <Stack>
-          <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Connections</Text>
-          {connections}
-        </Stack>
-      </Stack>
-    </Panel>
+      {<NodeDetailView
+        connections={connections}
+        department={department}
+        description={description}
+        url={url}
+      />}
+    </CustomPanel>
   )
 }

@@ -1,16 +1,53 @@
 import React, { useState, useReducer } from 'react'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
 import { NodeManager, Graph } from '../../util'
-import { TextField } from 'office-ui-fabric-react/lib/TextField'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
-import { ActionButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react'
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
 import uuid from 'uuid/v4'
 import set from 'lodash.set'
 import unset from 'lodash.unset'
 import { Connection } from './Connection'
-import { SystemType } from './SystemType'
+import { Network } from '../../util/Network'
+import { SystemFormView } from './SystemFormView'
+
+const makeConnections = (system, nodes) => {
+  const connections = {}
+  system.edges.forEach(edge => {
+    connections[edge.id] = {
+      read: edge.data.read,
+      write: edge.data.write,
+      connectionType: {
+        key: edge.data.type.id,
+        text: edge.data.type.label
+      },
+      connectedTo: {
+        key: edge.id,
+        text: get(nodes.filter(node => node.id === edge.id), '[0].data.name', '')
+      }
+    }
+  })
+  return connections
+}
+
+const makeFormState = system => {
+  const { network, getNodes } = Network.build()
+  const nodes = network.getConnectedNodes(system.id)
+
+  const connectedNodes = getNodes().filter(({ id }) => nodes.includes(id))
+
+  const formState = {
+    name: get(system, 'data.name'),
+    id: get(system, 'id'),
+    type: get(system, 'data.type'),
+    department: get(system, 'data.department'),
+    url: get(system, 'data.url'),
+    description: get(system, 'data.description'),
+    connections: makeConnections(system, connectedNodes)
+  }
+  return formState
+}
 
 const addNodeReducer = (state, action) => {
   if (action.path === '') return {}
@@ -19,6 +56,8 @@ const addNodeReducer = (state, action) => {
     case 'remove':
       unset(addNodeState, action.path)
       return addNodeState
+    case 'edit':
+      return { ...action.formState }
     default:
       set(addNodeState, action.path, action.value)
       return addNodeState
@@ -41,6 +80,22 @@ const connectionReducer = (connections, action) => {
       return connections.filter(({ key }) => key !== action.id)
     case 'reset':
       return []
+    case 'edit':
+      const connKeys = Object.keys(action.connections)
+      return connKeys.map(key => {
+        const id = key
+        const dispatch = get(action, 'dispatch', null)
+
+        if (!dispatch || !id) return
+        return (
+          <Connection
+            edit
+            key={id}
+            id={id}
+            handleRemove={() => dispatch({ type: 'remove', id })}
+          />
+        )
+      }).filter(item => item)
     default:
       return connections
   }
@@ -51,12 +106,14 @@ const getSystems = () => {
   return nodes.map(node => ({ key: node.id, text: node.data.name }))
 }
 
-const renderConnections = ({ connections, existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors }) => {
-  return connections.map(conn => React.cloneElement(conn, { existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors }))
-}
+const validate = (addNodeForm, nodeFormErrors) => {
+  let errors = {}
+  if (nodeFormErrors) {
+    errors = {
+      ...nodeFormErrors
+    }
+  }
 
-const validate = (addNodeForm) => {
-  const errors = {}
   if (!addNodeForm.type) {
     errors.type = 'A system type must be selected'
   }
@@ -79,8 +136,10 @@ const validate = (addNodeForm) => {
   return errors
 }
 
-export const AddNodeForm = props => {
-  const [isOpen, setIsOpen] = useState(true)
+export const SystemForm = (props) => {
+  const [edit, setEdit] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [addNodeForm, updateNodeForm] = useReducer(addNodeReducer, {})
   const [existingSystems, setExistingSystems] = useState(getSystems())
   const [nodeFormErrors, setNodeFormErrors] = useState({})
   const [connections, connDispatch] = useReducer(connectionReducer, [])
@@ -88,6 +147,20 @@ export const AddNodeForm = props => {
   const toggle = () => setIsOpen(!isOpen)
   const resetForm = () => updateNodeForm({ path: '', value: {} })
   const resetConnections = () => connDispatch({ type: 'reset' })
+
+  const handleEditSystem = (system) => {
+    const formState = makeFormState(system)
+    connDispatch({
+      type: 'edit',
+      connections: formState.connections || {},
+      dispatch: connDispatch
+    })
+    updateNodeForm({ type: 'edit', formState })
+    setEdit(true)
+    setIsOpen(true)
+  }
+
+  useEvent('edit-system-panel', handleEditSystem)
 
   const addConnection = () => {
     connDispatch({
@@ -100,8 +173,7 @@ export const AddNodeForm = props => {
   }
 
   const submitSystem = async () => {
-    const errors = validate(addNodeForm)
-    console.log(addNodeForm)
+    const errors = validate(addNodeForm, nodeFormErrors)
     if (Object.keys(errors).length > 0) {
       setNodeFormErrors({
         ...nodeFormErrors,
@@ -119,22 +191,25 @@ export const AddNodeForm = props => {
       department: get(addNodeForm, 'department', '')
     }
 
-    const node = Graph.makeNode({ connections, data })
-
-    await Graph.addNode(node)
+    if (edit) {
+      const node = await Graph.makeNode({ id: addNodeForm.id, connections, data })
+      await Graph.addNode(node)
+    } else {
+      const node = await Graph.makeNode({ connections, data })
+      await Graph.addNode(node)
+    }
 
     broadcastNodeSave()
     resetConnections()
     resetForm()
   }
 
-  const [addNodeForm, updateNodeForm] = useReducer(addNodeReducer, {})
-
   useEvent('toggle-left-panel', toggle)
   const dismiss = () => {
     resetForm()
     resetConnections()
     setIsOpen(false)
+    setEdit(false)
   }
 
   const updateExistingSystems = () => {
@@ -146,79 +221,28 @@ export const AddNodeForm = props => {
 
   return (
     <Panel
-      headerText='Add a New System Node'
+      headerText={`${edit ? 'Edit' : 'Add'} System`}
       isOpen={isOpen}
-      onDismiss={() => setIsOpen(false)}
+      onDismiss={dismiss}
       isFooterAtBottom
       onRenderFooterContent={() => (
         <Stack horizontal horizontalAlign='space-between' tokens={{ childrenGap: 12 }}>
           <DefaultButton text='Cancel' onClick={dismiss} />
-          <PrimaryButton text='Add System' onClick={submitSystem} />
+          <PrimaryButton text='Save System' onClick={submitSystem} />
         </Stack>
       )}
       type={PanelType.medium}
     >
-      <TextField
-        label='Name'
-        placeholder='Choose a name'
-        errorMessage={nodeFormErrors.name}
-        required
-        onGetErrorMessage={(value => {
-          const newSystem = String(value).toLowerCase()
-          if (existingSystems.some(({ text }) => String(text).toLowerCase() === newSystem)) {
-            setNodeFormErrors({
-              ...nodeFormErrors,
-              name: `The ${value} system already exists`
-            })
-          } else {
-            setNodeFormErrors({
-              ...nodeFormErrors,
-              name: null
-            })
-          }
-        })}
-        onChange={(event, value) => updateNodeForm({ path: 'name', value })}
-        value={addNodeForm.name || ''}
+      <SystemFormView
+        edit={edit}
+        existingSystems={existingSystems}
+        nodeFormErrors={nodeFormErrors}
+        setNodeFormErrors={setNodeFormErrors}
+        addNodeForm={addNodeForm}
+        updateNodeForm={updateNodeForm}
+        connections={connections}
+        addConnection={addConnection}
       />
-      <SystemType
-        required
-        errorMessage={nodeFormErrors.type}
-        selectedKey={addNodeForm.type || null}
-        onChange={(event, value) => {
-          updateNodeForm({ path: 'type', value: value.key })
-          setNodeFormErrors({
-            ...nodeFormErrors,
-            type: null
-          })
-        }}
-      />
-      <TextField
-        label='Department'
-        placeholder='Was this built for another department?'
-        onChange={(event, value) => updateNodeForm({ path: 'department', value })}
-        value={addNodeForm.department || ''}
-      />
-      <TextField
-        label='URL'
-        placeholder='Is there a url to access this system?'
-        onChange={(event, value) => updateNodeForm({ path: 'url', value })}
-        value={addNodeForm.url || ''}
-      />
-      <TextField
-        label='Description'
-        placeholder='Enter some information others may want to know about this system'
-        multiline
-        rows={4}
-        onChange={(event, value) => updateNodeForm({ path: 'description', value })}
-        value={addNodeForm.description || ''}
-      />
-      {renderConnections({ connections, existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors })}
-      <ActionButton
-        onClick={addConnection}
-        iconProps={{ iconName: 'Add' }}
-      >
-        Add Connection
-      </ActionButton>
     </Panel>
   )
 }

@@ -1,6 +1,5 @@
-import React, { useReducer, useEffect, useState, useRef } from 'react'
-import { Network, DataSet } from 'vis-network'
-import { NodeManager } from '../../util'
+import React, { useReducer, useEffect, useCallback, useState, useRef } from 'react'
+import { Network, NodeManager } from '../../util'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
 
@@ -59,6 +58,7 @@ const buildGraphData = (nodes, edges) => {
       type: node.data.type,
       ...getShape(node.data.type),
       label: node.data.name,
+      edges: node.edges,
       data: {
         ...node.data
       },
@@ -88,7 +88,7 @@ export const SystemsGraph = () => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, buildGraphData(NodeManager.getNodes(), NodeManager.getEdges()))
   const [activeNode, setActiveNode] = useState()
 
-  const network = useRef()
+  const graphContainer = useRef()
   const graph = useRef()
 
   const updateGraph = () => {
@@ -97,6 +97,29 @@ export const SystemsGraph = () => {
   const resetActiveNode = () => setActiveNode(null)
   const displayNodeDetails = useEvent('display-node-details')
 
+  const handleRightClick = useCallback(event => {
+    const node = graph.current.network.getNodeAt(event.pointer.DOM)
+    if (graph.current.network.isCluster(node)) {
+      graph.current.network.openCluster(node)
+    } else {
+      const matchingNode = systems.nodes.find(({ id }) => id === node)
+      if (!matchingNode) return
+      graph.current.network.clusterByConnection(node, { clusterNodeProperties: { label: matchingNode.data.name } })
+    }
+  }, [systems])
+
+  const handleNodeSelect = useCallback(params => {
+    const node = get(params, `nodes[0]`, null)
+    if (node) {
+      if (!graph.current.network.isCluster(node)) {
+        const matchingNode = systems.nodes.find(({ id }) => id === node)
+        if (matchingNode) {
+          setActiveNode(matchingNode)
+        }
+      }
+    }
+  }, [systems.nodes])
+
   useEffect(() => {
     if (activeNode) displayNodeDetails(activeNode)
   }, [activeNode, displayNodeDetails])
@@ -104,47 +127,35 @@ export const SystemsGraph = () => {
   useEvent('save-node-entry', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
 
-  console.log('render graph')
   useEffect(() => {
-    const nodes = new DataSet(systems.nodes)
-    const edges = new DataSet(systems.edges)
-    console.log('graph use effect')
     const options = {
-      physics: {
-        solver: 'repulsion'
-      },
       autoResize: false
     }
 
-    const data = { nodes, edges }
-    if (!network.current) {
-      network.current = new Network(graph.current, data, options)
-      network.current.on('oncontext', event => {
-        const node = network.current.getNodeAt(event.pointer.DOM)
-        if (network.current.isCluster(node)) {
-          network.current.openCluster(node)
-        } else {
-          const matchingNode = systems.nodes.find(({ id }) => id === node)
-          if (!matchingNode) return
-          network.current.clusterByConnection(node, { clusterNodeProperties: { label: matchingNode.data.name } })
-        }
-      })
-      network.current.on('selectNode', params => {
-        const node = get(params, `nodes[0]`, null)
-        if (node) {
-          if (!network.current.isCluster(node)) {
-            const matchingNode = systems.nodes.find(({ id }) => id === node)
-            if (matchingNode) {
-              setActiveNode(matchingNode)
-            }
-          }
-        }
-      })
+    if (!graph.current) {
+      const systemGraph = Network
+        .inContainer(graphContainer.current)
+        .withEdges(systems.edges)
+        .withNodes(systems.nodes)
+        .withOptions(options)
+        .build()
+
+      graph.current = systemGraph
+
+      graph.current.network.on('oncontext', handleRightClick)
+      graph.current.network.on('selectNode', handleNodeSelect)
+
+      setActiveNode(systems.nodes.find(({ id }) => id === 'cb72fa88-edde-4003-aaf0-a4436b827c8b'))
       document.addEventListener('contextmenu', e => e.preventDefault(), false)
     } else {
-      network.current.setData(data)
-    }
-  }, [systems])
+      graph.current.network.off('oncontext', handleRightClick)
+      graph.current.network.off('selectNode', handleNodeSelect)
+      graph.current.network.on('oncontext', handleRightClick)
+      graph.current.network.on('selectNode', handleNodeSelect)
 
-  return <div style={{ overflow: 'hidden', flex: 1 }} ref={graph} id='graph' />
+      graph.current.setData(systems)
+    }
+  }, [systems, handleNodeSelect, handleRightClick])
+
+  return <div style={{ overflow: 'hidden', flex: 1 }} ref={graphContainer} id='graph' />
 }
