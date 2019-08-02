@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
+import { IconButton } from 'office-ui-fabric-react'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
 import { Text } from 'office-ui-fabric-react/lib/Text'
 import { useEvent } from '../../hooks'
@@ -23,7 +24,7 @@ const parseConnections = (node) => {
         const read = get(edge, 'data.read')
         const write = get(edge, 'data.write')
 
-        acc.push(<Connection to={to} read={read} write={write} type={type} />)
+        acc.push(<Connection key={edge.node} to={to} read={read} write={write} type={type} />)
       })
     return acc
   }, [])
@@ -54,7 +55,7 @@ export const NodeDetail = props => {
 
   useEvent('display-node-details', displayNode)
   const deselectActiveNode = useEvent('deselect-active-node')
-  const name = get(node, 'name', 'Very Unnamed System')
+  const name = get(node, 'data.name', 'Very Unnamed System')
   const description = get(node, 'data.description', 'No description has been entered.')
   const department = get(node, 'data.department', 'No department has been entered.')
   const url = get(node, 'data.url', `${name} has no url`)
@@ -67,6 +68,14 @@ export const NodeDetail = props => {
       onDismiss={() => {
         deselectActiveNode()
         closePanel()
+      }}
+      onRenderHeader={(props) => {
+        return (
+          <Stack horizontal tokens={{ childrenGap: 12 }}>
+            <Text variant='xLarge' style={{ marginLeft: 16, marginBottom: 12 }}>{props.headerText}</Text>
+            <IconButton iconProps={{ iconName: 'Edit' }} />
+          </Stack>
+        )
       }}
       isLightDismiss
       type={PanelType.customNear}

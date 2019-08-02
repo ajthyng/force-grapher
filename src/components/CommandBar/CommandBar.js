@@ -3,6 +3,7 @@ import { useEvent } from '../../hooks'
 import { CommandBar as OfficeCommandBar } from 'office-ui-fabric-react/lib/CommandBar'
 import { downloadFile, uploadFile } from '../../util/FileManager'
 import { NodeManager } from '../../util/NodeManager'
+
 export const CommandBar = props => {
   const toggleLeftPanel = useEvent('toggle-left-panel')
 
@@ -42,8 +43,10 @@ export const CommandBar = props => {
   ]
 
   return (
-    <OfficeCommandBar
-      items={items}
-    />
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0 }}>
+      <OfficeCommandBar
+        items={items}
+      />
+    </div>
   )
 }

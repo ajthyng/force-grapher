@@ -144,5 +144,5 @@ export const SystemsGraph = props => {
     }
   }, [systems])
 
-  return <div style={{ height: '100%' }} ref={graph} id='graph' />
+  return <div style={{ overflow: 'hidden', flex: 1 }} ref={graph} id='graph' />
 }

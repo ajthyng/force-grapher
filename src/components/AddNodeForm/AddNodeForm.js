@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react'
+import React, { useState, useReducer } from 'react'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
 import { NodeManager, Graph } from '../../util'
 import { TextField } from 'office-ui-fabric-react/lib/TextField'
@@ -98,10 +98,6 @@ export const AddNodeForm = props => {
       updateNodeForm
     })
   }
-
-  useEffect(() => {
-
-  }, [])
 
   const submitSystem = async () => {
     const errors = validate(addNodeForm)

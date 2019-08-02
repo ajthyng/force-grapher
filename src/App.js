@@ -3,20 +3,19 @@ import styled from 'styled-components'
 import { SystemsGraph, NodeDetail, AddNodeForm, CommandBar } from './components'
 
 const Page = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background-color: #e8e3db;
+  flex: 1;
+  flex-direction: column;
+  display: flex;
 `
+
 function App () {
   return (
     <Page>
+      <SystemsGraph />
       <CommandBar />
       <AddNodeForm />
       <NodeDetail />
-      <SystemsGraph />
     </Page>
   )
 }

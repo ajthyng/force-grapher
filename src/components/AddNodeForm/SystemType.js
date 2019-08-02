@@ -1,8 +1,13 @@
 import React from 'react'
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
 
-export const SystemType = props => {
+const areEqual = (prevProps, nextProps) => {
+  return prevProps.selectedKey === nextProps.selectedKey
+}
+
+export const SystemType = React.memo(props => {
   const { selectedKey, onChange, required, errorMessage } = props
+
   return (
     <Dropdown
       required={required}
@@ -18,4 +23,4 @@ export const SystemType = props => {
       onChange={onChange}
     />
   )
-}
+}, areEqual)
