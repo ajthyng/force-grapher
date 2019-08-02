@@ -45,7 +45,7 @@ export const Connection = props => {
         value: true
       })
     }
-  }, [updateNodeForm, id])
+  }, [updateNodeForm, id, edit])
 
   return (
     <ConnectionContainer>

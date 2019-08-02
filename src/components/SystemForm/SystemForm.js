@@ -86,7 +86,8 @@ const connectionReducer = (connections, action) => {
         const id = key
         const dispatch = get(action, 'dispatch', null)
 
-        if (!dispatch || !id) return
+        if (!dispatch || !id) return null
+
         return (
           <Connection
             edit

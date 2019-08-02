@@ -1,4 +1,3 @@
-import omit from 'lodash.omit'
 import get from 'lodash.get'
 import differenceby from 'lodash.differenceby'
 import uuid from 'uuid/v4'
