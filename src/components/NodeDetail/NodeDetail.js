@@ -100,12 +100,12 @@ export const NodeDetail = props => {
       customWidth={400}
       headerText={name}
     >
-      {<NodeDetailView
+      <NodeDetailView
         connections={connections}
         department={department}
         description={description}
         url={url}
-      />}
+      />
     </CustomPanel>
   )
 }

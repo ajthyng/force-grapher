@@ -7,6 +7,16 @@ const renderConnections = ({ connections, existingSystems, addNodeForm, updateNo
   return connections.map(conn => React.cloneElement(conn, { existingSystems, addNodeForm, updateNodeForm, setNodeFormErrors, nodeFormErrors }))
 }
 
+const checkURL = url => {
+  if (!url) return
+  try {
+    const checkedURL = new URL(url)
+    if (checkedURL) return null
+  } catch (err) {
+    return err.message
+  }
+}
+
 export const SystemFormView = props => {
   const {
     nodeFormErrors,
@@ -71,6 +81,7 @@ export const SystemFormView = props => {
         label='URL'
         placeholder='Is there a url to access this system?'
         onChange={(event, value) => updateNodeForm({ path: 'url', value })}
+        onGetErrorMessage={value => checkURL(value)}
         value={addNodeForm.url || ''}
       />
       <TextField

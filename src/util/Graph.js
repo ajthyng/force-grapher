@@ -92,7 +92,8 @@ const _Graph = () => {
         edges: [],
         previousEdges: nodes[id].edges.map(item => ({ ...item })),
         data: {
-          ...nodes[id].data
+          ...nodes[id].data,
+          ...data
         }
       }
     } else {
@@ -106,8 +107,9 @@ const _Graph = () => {
     }
 
     const connectionKeys = Object.keys(connections || {})
+    const previousEdges = get(node, 'previousEdges', [])
 
-    if (connectionKeys.length <= 0) {
+    if (connectionKeys.length <= 0 && previousEdges.length > 0) {
       const edges = await getEdges()
       delete edges[node.id]
       const removeEdges = []
