@@ -17,9 +17,9 @@ const systemsReducer = (state, action) => {
 const getLinkColor = (type) => {
   switch (type) {
     case 'custom':
-      return '#4b721d'
+      return '#005481'
     case 'builtin':
-      return '#deb407'
+      return '#9e6614'
     default:
       return '#A0A0A0'
   }
@@ -59,6 +59,12 @@ const buildGraphData = (nodes, edges) => {
       ...getShape(node.data.type),
       label: node.data.name,
       edges: node.edges,
+      shadow: {
+        enabled: true,
+        size: 4,
+        x: 1,
+        y: 1
+      },
       data: {
         ...node.data
       },
@@ -74,7 +80,11 @@ const buildGraphData = (nodes, edges) => {
       graphData.edges.push({
         from: nodeId,
         to: edge.node,
-        color: getLinkColor(get(edge, 'data.type.id')),
+        color: {
+          color: getLinkColor(get(edge, 'data.type.id')),
+          hover: '#501214'
+        },
+        dashes: get(edge, 'data.type.id') === 'custom',
         type: get(edge, 'data.type', {}),
         arrows: 'to'
       })
@@ -129,7 +139,11 @@ export const SystemsGraph = () => {
 
   useEffect(() => {
     const options = {
-      autoResize: false
+      autoResize: false,
+      interaction: {
+        hover: true,
+        hoverConnectedEdges: true
+      }
     }
 
     if (!graph.current) {
@@ -145,7 +159,6 @@ export const SystemsGraph = () => {
       graph.current.network.on('oncontext', handleRightClick)
       graph.current.network.on('selectNode', handleNodeSelect)
 
-      setActiveNode(systems.nodes.find(({ id }) => id === 'cb72fa88-edde-4003-aaf0-a4436b827c8b'))
       document.addEventListener('contextmenu', e => e.preventDefault(), false)
     } else {
       graph.current.network.off('oncontext', handleRightClick)

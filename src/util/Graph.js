@@ -54,8 +54,10 @@ const _Graph = () => {
     const node2TargetID = _edges[node1.id].findIndex(({ node }) => node === node2.id)
 
     if (node2TargetID >= 0) {
+      // Replace edge because it exists already
       _edges[node1.id][node2TargetID] = { node: node2.id, data }
     } else {
+      // Add edge, it does not exist
       _edges[node1.id].push({ node: node2.id, data })
     }
 
