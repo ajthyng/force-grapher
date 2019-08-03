@@ -104,7 +104,11 @@ const connectionReducer = (connections, action) => {
 
 const getSystems = () => {
   const nodes = NodeManager.getNodes()
-  return nodes.map(node => ({ key: node.id, text: node.data.name }))
+  return nodes.map(node => ({ key: node.id, text: node.data.name })).sort((a, b) => {
+    if (a.text < b.text) return -1
+    if (a.text > b.text) return 1
+    return 0
+  })
 }
 
 const validate = (addNodeForm, nodeFormErrors) => {
