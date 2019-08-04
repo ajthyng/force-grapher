@@ -1,4 +1,5 @@
 import React, { useReducer, useEffect, useCallback, useState, useRef } from 'react'
+import { Legend } from '../Legend'
 import { Network, Graph } from '../../util'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
@@ -151,7 +152,6 @@ export const SystemsGraph = () => {
   useEvent('deselect-active-node', resetActiveNode)
 
   useEffect(() => {
-    console.log(systems)
     const options = {
       autoResize: false,
       interaction: {
@@ -197,5 +197,10 @@ export const SystemsGraph = () => {
     }
   }, [systems, handleNodeSelect])
 
-  return <div style={{ overflow: 'hidden', flex: 1 }} ref={graphContainer} id='graph' />
+  return (
+    <>
+      <div style={{ overflow: 'hidden', height: 'calc(100% - 44px)' }} ref={graphContainer} id='graph' />
+      <Legend />
+    </>
+  )
 }
