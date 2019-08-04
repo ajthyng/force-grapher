@@ -12,7 +12,6 @@ const Page = styled.div`
 function App () {
   return (
     <Page>
-      <i class='hidden ion-md-heart' />
       <CommandBar />
       <SystemsGraph />
       <SystemForm />

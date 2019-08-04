@@ -125,15 +125,46 @@ export const SystemsGraph = () => {
     systemsDispatch({ type: 'update', nodes, edges })
   }
 
+  const updateSearchResults = (results) => {
+    if (graph.current.network) {
+      if (results.length <= 0) {
+        const selected = graph.current.network.getSelectedNodes()
+        graph.current.network.unselectAll()
+
+        // Were there nodes selected? Zoom back out.
+        if (selected.length > 0) {
+          graph.current.network.fit({
+            animation: {
+              duration: 300,
+              easingFunction: 'easeInOutQuad'
+            }
+          })
+        }
+        return
+      }
+      graph.current.network.selectNodes(results)
+      graph.current.network.fit({
+        nodes: results,
+        animation: {
+          duration: 300,
+          easingFunction: 'easeInOutQuad'
+        }
+      })
+    }
+  }
+
   useEffect(() => {
     updateGraph()
   }, [])
 
   const resetActiveNode = () => setActiveNode(null)
   const displayNodeDetails = useEvent('display-node-details')
+  useEvent('node-search-result', updateSearchResults)
 
   const handleNodeSelect = useCallback(params => {
     const node = get(params, `nodes[0]`, null)
+    if (params.nodes.length > 1) return
+
     if (node) {
       if (!graph.current.network.isCluster(node)) {
         const matchingNode = systems.nodes.find(({ id }) => id === node)

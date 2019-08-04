@@ -54,6 +54,11 @@ const _Graph = () => {
     return _get('_edges', {})
   }
 
+  const getNodesArray = async () => {
+    const nodes = await _get('_nodes', {})
+    return Object.values(nodes)
+  }
+
   const getNodes = async () => {
     return _get('_nodes', {})
   }
@@ -293,6 +298,7 @@ const _Graph = () => {
     removeEdge,
     removeDirectedEdge,
     updateNodePosition,
+    getNodesArray,
     makeNode
   }
 }
