@@ -2,11 +2,55 @@ import get from 'lodash.get'
 import differenceby from 'lodash.differenceby'
 import uuid from 'uuid/v4'
 
+const shouldFixEdges = true
+
 const _Graph = () => {
   const _get = (key, defaultValue) => JSON.parse(localStorage.getItem(key)) || defaultValue
   const _set = (key, value) => localStorage.setItem(key, JSON.stringify(value))
 
+  const fixEdges = oldEdges => {
+    const edges = { ...oldEdges }
+    const edgeKeys = Object.keys(edges)
+    let didFix = false
+
+    edgeKeys.forEach(key => {
+      const nodeEdges = edges[key]
+      const currentEdgeID = key
+      nodeEdges.forEach(edge => {
+        if (edge.node === key) return
+        const otherEdges = edges[edge.node]
+        const otherEdgeIndex = otherEdges && otherEdges.findIndex(edge => edge.node === currentEdgeID)
+        if (otherEdgeIndex >= 0) {
+          otherEdges.splice(otherEdgeIndex, 1)
+          if (!didFix) didFix = true
+        }
+      })
+
+      if (edges.length <= 0) delete nodeEdges[key]
+    })
+
+    return { edges, didFix }
+  }
+
+  const updateNodePosition = async ({ node, x, y }) => {
+    const nodes = await _get('_nodes', {})
+    if (nodes[node]) {
+      nodes[node].position = {
+        x,
+        y
+      }
+    }
+    return _set('_nodes', nodes)
+  }
+
   const getEdges = async () => {
+    if (shouldFixEdges) {
+      const _edges = await _get('_edges', {})
+      const { didFix, edges } = fixEdges(_edges)
+      if (didFix) {
+        await _set('_edges', edges)
+      }
+    }
     return _get('_edges', {})
   }
 
@@ -38,10 +82,8 @@ const _Graph = () => {
     const _edges = await getEdges()
 
     if (!Array.isArray(_edges[node1.id])) _edges[node1.id] = []
-    if (!Array.isArray(_edges[node2.id])) _edges[node2.id] = []
 
     await addDirectedEdge(node1, node2, data)
-    await addDirectedEdge(node2, node1, data)
   }
 
   const addDirectedEdge = async (node1, node2, data) => {
@@ -69,7 +111,7 @@ const _Graph = () => {
 
     const _edges = await getEdges()
 
-    _edges[node1.id] = _edges[node1.id].filter(({ node }) => node !== node2.id)
+    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(({ node }) => node !== node2.id)
 
     await setEdges(_edges)
   }
@@ -79,8 +121,7 @@ const _Graph = () => {
 
     const _edges = await getEdges()
 
-    _edges[node1.id] = _edges[node1.id].filter(({ node }) => node !== node2.id)
-    _edges[node2.id] = _edges[node2.id].filter(({ node }) => node !== node1.id)
+    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(({ node }) => node !== node2.id)
 
     await setEdges(_edges)
   }
@@ -246,9 +287,12 @@ const _Graph = () => {
   }
 
   return {
+    getNodes,
+    getEdges,
     addNode,
     removeEdge,
     removeDirectedEdge,
+    updateNodePosition,
     makeNode
   }
 }

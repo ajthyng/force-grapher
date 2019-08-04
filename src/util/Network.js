@@ -1,4 +1,5 @@
 import { Network as VisNetwork, DataSet } from 'vis-network'
+import { Graph } from './Graph'
 
 const _Network = () => {
   let _nodes = []
@@ -37,6 +38,14 @@ const _Network = () => {
   const build = () => {
     if (!_network) {
       _network = new VisNetwork(_container, makeData(), _options)
+      _network.once('afterDrawing', function () {
+        _network.fit({
+          animation: {
+            duration: 600,
+            easingFunction: 'easeInOutQuad'
+          }
+        })
+      })
     }
     return {
       network: _network,
@@ -45,6 +54,7 @@ const _Network = () => {
         _edges = edges
         _network.setData(makeData())
       },
+      updateNodePosition: Graph.updateNodePosition,
       getNodes: () => _nodes,
       getEdges: () => _edges
     }

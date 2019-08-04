@@ -1,13 +1,13 @@
 import React, { useReducer, useEffect, useCallback, useState, useRef } from 'react'
-import { Network, NodeManager } from '../../util'
+import { Network, Graph } from '../../util'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
 
 const systemsReducer = (state, action) => {
   switch (action.type) {
     case 'update':
-      const nodes = NodeManager.getNodes()
-      const edges = NodeManager.getEdges()
+      const nodes = action.nodes
+      const edges = action.edges
       return buildGraphData(nodes, edges)
     default:
       return state
@@ -28,25 +28,29 @@ const getLinkColor = (type) => {
 const getShape = (type) => {
   switch (type) {
     case 'cloud':
-      return { size: 40, widthConstraint: { minimum: 40, maximum: 100 } }
+      // Cloud shape
+      return { shape: 'icon', shapeProperties: { size: 25 }, icon: { face: 'Ionicons', code: '\uf2c9', color: '#FFF' } }
     case 'external':
-      return { shape: 'circle', size: 40, widthConstraint: { minimum: 40, maximum: 100 } }
+      return { shape: 'icon', shapeProperties: { size: 25 }, icon: { face: 'Ionicons', code: '\uf381', color: '#FFF' } }
     case 'oncampus':
     default:
-      return { shape: 'box', size: 40, widthConstraint: { minimum: 40, maximum: 100 } }
+      // Square Shape
+      return { shape: 'icon', shapeProperties: { size: 25 }, icon: { face: 'Ionicons', code: '\uf384', color: '#FFF' } }
   }
+}
+
+const getArrowDirection = (edge) => {
+  const read = get(edge, 'data.read')
+  const write = get(edge, 'data.write')
+
+  if (read && write) return 'from, to'
+  return 'to'
 }
 
 const buildGraphData = (nodes, edges) => {
   const graphData = {
     nodes: [],
     edges: []
-  }
-  if (!Array.isArray(nodes)) {
-    return {
-      nodes: [],
-      edges: []
-    }
   }
 
   const nodeKeys = Object.keys(nodes || {})
@@ -59,6 +63,11 @@ const buildGraphData = (nodes, edges) => {
       ...getShape(node.data.type),
       label: node.data.name,
       edges: node.edges,
+      font: {
+        color: '#363534',
+        strokeWidth: 2,
+        strokeColor: '#FFFFFF'
+      },
       shadow: {
         enabled: true,
         size: 4,
@@ -68,7 +77,9 @@ const buildGraphData = (nodes, edges) => {
       data: {
         ...node.data
       },
-      color: '#FFFFFF'
+      color: '#FFFFFF',
+      x: get(node, 'position.x'),
+      y: get(node, 'position.y')
     })
   })
 
@@ -80,6 +91,11 @@ const buildGraphData = (nodes, edges) => {
       graphData.edges.push({
         from: nodeId,
         to: edge.node,
+        smooth: {
+          enabled: true,
+          type: 'cubizBezier',
+          roundness: 0.15
+        },
         color: {
           color: getLinkColor(get(edge, 'data.type.id')),
           hover: '#501214',
@@ -87,7 +103,7 @@ const buildGraphData = (nodes, edges) => {
         },
         dashes: get(edge, 'data.type.id') === 'custom',
         type: get(edge, 'data.type', {}),
-        arrows: 'to'
+        arrows: getArrowDirection(edge, nodeId)
       })
     })
   })
@@ -96,28 +112,24 @@ const buildGraphData = (nodes, edges) => {
 }
 
 export const SystemsGraph = () => {
-  const [systems, systemsDispatch] = useReducer(systemsReducer, buildGraphData(NodeManager.getNodes(), NodeManager.getEdges()))
+  const [systems, systemsDispatch] = useReducer(systemsReducer, { nodes: [], edges: [] })
   const [activeNode, setActiveNode] = useState()
 
   const graphContainer = useRef()
   const graph = useRef()
 
-  const updateGraph = () => {
-    systemsDispatch({ type: 'update' })
+  const updateGraph = async () => {
+    const nodes = await Graph.getNodes()
+    const edges = await Graph.getEdges()
+    systemsDispatch({ type: 'update', nodes, edges })
   }
+
+  useEffect(() => {
+    updateGraph()
+  }, [])
+
   const resetActiveNode = () => setActiveNode(null)
   const displayNodeDetails = useEvent('display-node-details')
-
-  const handleRightClick = useCallback(event => {
-    const node = graph.current.network.getNodeAt(event.pointer.DOM)
-    if (graph.current.network.isCluster(node)) {
-      graph.current.network.openCluster(node)
-    } else {
-      const matchingNode = systems.nodes.find(({ id }) => id === node)
-      if (!matchingNode) return
-      graph.current.network.clusterByConnection(node, { clusterNodeProperties: { label: matchingNode.data.name } })
-    }
-  }, [systems])
 
   const handleNodeSelect = useCallback(params => {
     const node = get(params, `nodes[0]`, null)
@@ -139,15 +151,20 @@ export const SystemsGraph = () => {
   useEvent('deselect-active-node', resetActiveNode)
 
   useEffect(() => {
+    console.log(systems)
     const options = {
       autoResize: false,
       interaction: {
         hover: true,
         hoverConnectedEdges: true
+      },
+      physics: {
+        enabled: false
       }
     }
 
     if (!graph.current) {
+      const start = new Date()
       const systemGraph = Network
         .inContainer(graphContainer.current)
         .withEdges(systems.edges)
@@ -155,21 +172,30 @@ export const SystemsGraph = () => {
         .withOptions(options)
         .build()
 
+      console.log(`Network Build Time: ${new Date() - start}ms`)
       graph.current = systemGraph
 
-      graph.current.network.on('oncontext', handleRightClick)
       graph.current.network.on('selectNode', handleNodeSelect)
+      graph.current.network.on('dragEnd', event => {
+        if (event.nodes.length > 0) {
+          const node = get(event, 'nodes[0]')
+          const { x, y } = get(event, 'pointer.canvas', {})
+          graph.current.updateNodePosition({
+            node,
+            x,
+            y
+          })
+        }
+      })
 
       document.addEventListener('contextmenu', e => e.preventDefault(), false)
     } else {
-      graph.current.network.off('oncontext', handleRightClick)
       graph.current.network.off('selectNode', handleNodeSelect)
-      graph.current.network.on('oncontext', handleRightClick)
       graph.current.network.on('selectNode', handleNodeSelect)
 
       graph.current.setData(systems)
     }
-  }, [systems, handleNodeSelect, handleRightClick])
+  }, [systems, handleNodeSelect])
 
   return <div style={{ overflow: 'hidden', flex: 1 }} ref={graphContainer} id='graph' />
 }
