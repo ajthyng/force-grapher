@@ -82,7 +82,8 @@ const buildGraphData = (nodes, edges) => {
         to: edge.node,
         color: {
           color: getLinkColor(get(edge, 'data.type.id')),
-          hover: '#501214'
+          hover: '#501214',
+          highlight: '#501214'
         },
         dashes: get(edge, 'data.type.id') === 'custom',
         type: get(edge, 'data.type', {}),
