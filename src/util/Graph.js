@@ -43,6 +43,16 @@ const _Graph = () => {
     return _set('_nodes', nodes)
   }
 
+  const updateBatchNodePositions = async (nodes) => {
+    const existingNodes = await _get('_nodes', {})
+    Object.entries(nodes).forEach(([node, { x, y }]) => {
+      if (existingNodes[node]) {
+        existingNodes[node].position = { x, y }
+      }
+    })
+    return _set('_nodes', existingNodes)
+  }
+
   const getEdges = async () => {
     if (shouldFixEdges) {
       const _edges = await _get('_edges', {})
@@ -298,6 +308,7 @@ const _Graph = () => {
     removeEdge,
     removeDirectedEdge,
     updateNodePosition,
+    updateBatchNodePositions,
     getNodesArray,
     makeNode
   }

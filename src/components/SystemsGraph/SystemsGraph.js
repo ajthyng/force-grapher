@@ -1,7 +1,7 @@
 import React, { useReducer, useEffect, useCallback, useState, useRef } from 'react'
 import { Legend } from '../Legend'
 import { Network, Graph, Subject } from '../../util'
-import { useEvent } from '../../hooks'
+import { useEvent, useEventListener } from '../../hooks'
 import get from 'lodash.get'
 
 const systemsReducer = (state, action) => {
@@ -116,6 +116,8 @@ export const SystemsGraph = () => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, { nodes: [], edges: [] })
   const [activeNode, setActiveNode] = useState()
   const [lastAdded, setLastAdded] = useState()
+  const selectedNodes = useRef([])
+  const holdingShift = useRef(false)
 
   const graphContainer = useRef()
   const graph = useRef()
@@ -156,12 +158,6 @@ export const SystemsGraph = () => {
 
   useEffect(() => {
     updateGraph()
-    window.addEventListener('keydown', event => {
-      if (event.ctrlKey && event.keyCode === 70) {
-        event.preventDefault()
-        Subject.next('focus-search-bar')
-      }
-    })
   }, [])
 
   const resetActiveNode = () => setActiveNode(null)
@@ -170,10 +166,10 @@ export const SystemsGraph = () => {
 
   const handleNodeSelect = useCallback(params => {
     const node = get(params, `nodes[0]`, null)
-    if (params.nodes.length > 1) return
+    if (params.nodes.length > 1 || holdingShift) return
 
     if (node) {
-      if (!graph.current.network.isCluster(node)) {
+      if (!graph.current.network.isCluster(node) && !holdingShift.current) {
         const matchingNode = systems.nodes.find(({ id }) => id === node)
         if (matchingNode) {
           setActiveNode(matchingNode)
@@ -185,28 +181,48 @@ export const SystemsGraph = () => {
   const handleNodeClick = useCallback(params => {
     const node = graph.current.network.getNodeAt(params.pointer.DOM)
     if (node) {
-      if (params.nodes.includes(node)) {
-        if (!graph.current.network.isCluster(node)) {
-          const matchingNode = systems.nodes.find(({ id }) => id === node)
-          if (matchingNode) {
-            setActiveNode(matchingNode)
-          }
+      if (!graph.current.network.isCluster(node) && !holdingShift.current) {
+        const matchingNode = systems.nodes.find(({ id }) => id === node)
+        if (matchingNode) {
+          setActiveNode(matchingNode)
         }
       }
+
+      if (holdingShift.current && params.nodes[0]) {
+        const selected = [...selectedNodes.current, params.nodes[0]]
+        selectedNodes.current = selected
+        graph.current.network.selectNodes(selected)
+      }
+    } else {
+      selectedNodes.current = []
     }
   }, [systems.nodes])
 
   const handleNodeDrag = useCallback(event => {
     if (event.nodes.length > 0) {
-      const node = get(event, 'nodes[0]')
-      const { x, y } = get(event, 'pointer.canvas', {})
-      graph.current.updateNodePosition({
-        node,
-        x,
-        y
-      })
+      const positions = graph.current.network.getPositions(event.nodes)
+      Graph.updateBatchNodePositions(positions)
     }
   }, [])
+
+  const handleKeyDown = useCallback(event => {
+    if (event.ctrlKey && event.keyCode === 70) {
+      event.preventDefault()
+      Subject.next('focus-search-bar')
+    }
+    if (event.shiftKey && !holdingShift.current) {
+      holdingShift.current = true
+    }
+  }, [holdingShift])
+
+  const handleKeyUp = useCallback(event => {
+    if (!event.shiftKey && holdingShift.current) {
+      holdingShift.current = false
+    }
+  }, [holdingShift])
+
+  useEventListener('keydown', handleKeyDown)
+  useEventListener('keyup', handleKeyUp)
 
   useEffect(() => {
     if (activeNode) displayNodeDetails(activeNode)
@@ -258,6 +274,7 @@ export const SystemsGraph = () => {
       graph.current.network.on('click', handleNodeClick)
       graph.current.network.on('dragEnd', handleNodeDrag)
 
+      console.log('redrawing')
       graph.current.setData(systems)
       if (lastAdded) {
         graph.current.network.focus(lastAdded, {
