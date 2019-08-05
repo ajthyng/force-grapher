@@ -80,8 +80,21 @@ export const SystemFormView = props => {
       <TextField
         label='URL'
         placeholder='Is there a url to access this system?'
-        onChange={(event, value) => updateNodeForm({ path: 'url', value })}
-        onGetErrorMessage={value => checkURL(value)}
+        errorMessage={nodeFormErrors.url}
+        onChange={(event, value) => {
+          updateNodeForm({ path: 'url', value })
+          if ('url' in nodeFormErrors) {
+            const errors = {
+              ...nodeFormErrors
+            }
+            delete errors.url
+            setNodeFormErrors(errors)
+          }
+        }}
+        onGetErrorMessage={value => {
+          if (!value) return null
+          return checkURL(value)
+        }}
         value={addNodeForm.url || ''}
       />
       <TextField

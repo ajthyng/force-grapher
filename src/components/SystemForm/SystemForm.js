@@ -31,6 +31,16 @@ const makeConnections = (system, nodes) => {
   return connections
 }
 
+const checkURL = url => {
+  if (!url) return
+  try {
+    const checkedURL = new URL(url)
+    if (checkedURL) return null
+  } catch (err) {
+    return err.message
+  }
+}
+
 const makeFormState = system => {
   const { network, getNodes } = Network.build()
   const nodes = network.getConnectedNodes(system.id)
@@ -125,6 +135,12 @@ const validate = (addNodeForm, nodeFormErrors) => {
 
   if (!addNodeForm.name) {
     errors.name = 'A system name is required'
+  }
+
+  if (addNodeForm.url) {
+    const error = checkURL(addNodeForm.url)
+    console.log(errors)
+    if (error) errors.url = error
   }
 
   if (addNodeForm.connections) {
