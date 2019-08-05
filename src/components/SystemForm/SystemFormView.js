@@ -11,7 +11,7 @@ const checkURL = url => {
   if (!url) return
   try {
     const checkedURL = new URL(url)
-    if (checkedURL) return null
+    if (checkedURL) return ''
   } catch (err) {
     return err.message
   }
@@ -92,7 +92,7 @@ export const SystemFormView = props => {
           }
         }}
         onGetErrorMessage={value => {
-          if (!value) return null
+          if (!value) return
           return checkURL(value)
         }}
         value={addNodeForm.url || ''}

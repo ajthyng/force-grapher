@@ -212,17 +212,24 @@ export const SystemForm = (props) => {
       department: get(addNodeForm, 'department', '')
     }
 
+    let id = null
     if (edit) {
       const node = await Graph.makeNode({ id: addNodeForm.id, connections, data })
+      id = addNodeForm.id
       await Graph.addNode(node)
     } else {
       const node = await Graph.makeNode({ connections, data })
+      id = node.id
       await Graph.addNode(node)
     }
 
     broadcastNodeSave()
+    nodeAdded(id)
     resetConnections()
     resetForm()
+    if (edit) {
+      dismiss()
+    }
   }
 
   useEvent('toggle-left-panel', toggle)
@@ -239,6 +246,7 @@ export const SystemForm = (props) => {
   }
 
   const broadcastNodeSave = useEvent('save-node-entry', updateExistingSystems)
+  const nodeAdded = useEvent('node-added')
 
   return (
     <Panel

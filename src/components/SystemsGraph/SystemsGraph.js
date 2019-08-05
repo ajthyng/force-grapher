@@ -115,6 +115,7 @@ const buildGraphData = (nodes, edges) => {
 export const SystemsGraph = () => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, { nodes: [], edges: [] })
   const [activeNode, setActiveNode] = useState()
+  const [lastAdded, setLastAdded] = useState()
 
   const graphContainer = useRef()
   const graph = useRef()
@@ -181,12 +182,31 @@ export const SystemsGraph = () => {
     }
   }, [systems.nodes])
 
+  const handleNodeClick = useCallback(params => {
+    const node = graph.current.network.getNodeAt(params.pointer.DOM)
+    if (node) {
+      if (params.nodes.includes(node)) {
+        if (!graph.current.network.isCluster(node)) {
+          const matchingNode = systems.nodes.find(({ id }) => id === node)
+          if (matchingNode) {
+            setActiveNode(matchingNode)
+          }
+        }
+      }
+    }
+  }, [systems.nodes])
+
   useEffect(() => {
     if (activeNode) displayNodeDetails(activeNode)
   }, [activeNode, displayNodeDetails])
 
+  const updateLastAdded = (node) => {
+    setLastAdded(node)
+  }
+
   useEvent('save-node-entry', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
+  useEvent('node-added', updateLastAdded)
 
   useEffect(() => {
     const options = {
@@ -229,10 +249,21 @@ export const SystemsGraph = () => {
     } else {
       graph.current.network.off('selectNode', handleNodeSelect)
       graph.current.network.on('selectNode', handleNodeSelect)
+      graph.current.network.on('click', handleNodeClick)
 
       graph.current.setData(systems)
+      if (lastAdded) {
+        graph.current.network.selectNodes([lastAdded])
+        graph.current.network.focus(lastAdded, {
+          scale: 3,
+          animation: {
+            duration: 300,
+            easingFunction: 'easeInOutCubic'
+          }
+        })
+      }
     }
-  }, [systems, handleNodeSelect])
+  }, [systems, handleNodeClick, lastAdded, handleNodeSelect])
 
   return (
     <>
