@@ -196,6 +196,18 @@ export const SystemsGraph = () => {
     }
   }, [systems.nodes])
 
+  const handleNodeDrag = useCallback(event => {
+    if (event.nodes.length > 0) {
+      const node = get(event, 'nodes[0]')
+      const { x, y } = get(event, 'pointer.canvas', {})
+      graph.current.updateNodePosition({
+        node,
+        x,
+        y
+      })
+    }
+  }, [])
+
   useEffect(() => {
     if (activeNode) displayNodeDetails(activeNode)
   }, [activeNode, displayNodeDetails])
@@ -233,27 +245,21 @@ export const SystemsGraph = () => {
       graph.current = systemGraph
 
       graph.current.network.on('selectNode', handleNodeSelect)
-      graph.current.network.on('dragEnd', event => {
-        if (event.nodes.length > 0) {
-          const node = get(event, 'nodes[0]')
-          const { x, y } = get(event, 'pointer.canvas', {})
-          graph.current.updateNodePosition({
-            node,
-            x,
-            y
-          })
-        }
-      })
+      graph.current.network.on('dragEnd', handleNodeDrag)
+      graph.current.network.on('click', handleNodeClick)
 
       document.addEventListener('contextmenu', e => e.preventDefault(), false)
     } else {
-      graph.current.network.off('selectNode', handleNodeSelect)
+      graph.current.network.off('selectNode')
+      graph.current.network.off('dragEnd')
+      graph.current.network.off('click')
+
       graph.current.network.on('selectNode', handleNodeSelect)
       graph.current.network.on('click', handleNodeClick)
+      graph.current.network.on('dragEnd', handleNodeDrag)
 
       graph.current.setData(systems)
       if (lastAdded) {
-        graph.current.network.selectNodes([lastAdded])
         graph.current.network.focus(lastAdded, {
           scale: 3,
           animation: {
@@ -263,7 +269,7 @@ export const SystemsGraph = () => {
         })
       }
     }
-  }, [systems, handleNodeClick, lastAdded, handleNodeSelect])
+  }, [systems, handleNodeClick, handleNodeDrag, lastAdded, handleNodeSelect])
 
   return (
     <>
