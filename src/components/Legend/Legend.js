@@ -99,8 +99,8 @@ export const Legend = props => {
       <Node icon={OnCampus} label='On Campus System' />
       <Node icon={External} label='External System' />
       <Node icon={Cloud} label='Cloud System' />
-      <Edge color='#005481' dashed label='Built-in Interface' />
-      <Edge color='#9e6614' label='Custom Interface' />
+      <Edge color='#005481' dashed label='Custom Interface' />
+      <Edge color='#9e6614' label='Built-in Interface' />
     </LegendContainer>
   )
 }
