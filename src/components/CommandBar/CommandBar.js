@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useEvent } from '../../hooks'
 import { CommandBar as OfficeCommandBar } from 'office-ui-fabric-react/lib/CommandBar'
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox'
@@ -25,6 +25,7 @@ const handleSearch = async (event, value) => {
 const SearchNodes = () => {
   return (
     <SearchBox
+      id='search-box-nodes'
       placeholder='Search'
       className='searchBox'
       styles={{
@@ -40,6 +41,14 @@ const SearchNodes = () => {
 
 export const CommandBar = props => {
   const toggleLeftPanel = useEvent('toggle-left-panel')
+  useEffect(() => {
+    const focusSearch = () => {
+      const searchBox = document.querySelector('#search-box-nodes')
+      searchBox.focus()
+    }
+
+    Subject.subscribe('focus-search-bar', focusSearch)
+  }, [])
 
   const farItems = [
     {

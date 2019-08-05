@@ -16,7 +16,7 @@ const NodeDetailView = props => {
       </Stack>
       <Stack tokens={{ childrenGap: 4 }}>
         <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>URL</Text>
-        <a href={url}>{url}</a>
+        <a href={url} target='_blank' rel='noopener noreferrer'>{url}</a>
       </Stack>
       <Stack>
         <Text style={{ textDecoration: 'underline' }} variant='mediumPlus'>Connections</Text>

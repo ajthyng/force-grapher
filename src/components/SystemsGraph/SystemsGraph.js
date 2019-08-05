@@ -1,6 +1,6 @@
 import React, { useReducer, useEffect, useCallback, useState, useRef } from 'react'
 import { Legend } from '../Legend'
-import { Network, Graph } from '../../util'
+import { Network, Graph, Subject } from '../../util'
 import { useEvent } from '../../hooks'
 import get from 'lodash.get'
 
@@ -155,6 +155,12 @@ export const SystemsGraph = () => {
 
   useEffect(() => {
     updateGraph()
+    window.addEventListener('keydown', event => {
+      if (event.ctrlKey && event.keyCode === 70) {
+        event.preventDefault()
+        Subject.next('focus-search-bar')
+      }
+    })
   }, [])
 
   const resetActiveNode = () => setActiveNode(null)
