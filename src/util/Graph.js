@@ -63,6 +63,15 @@ const _Graph = () => {
 
   const getEdges = async () => {
     const current = await getCurrentDiagram()
+    if (!current._edges) {
+      const edges = await _get('_edges', {})
+      if (edges) {
+        current._edges = edges
+        await updateDiagrams(current)
+        await localStorage.removeItem('_edges')
+      }
+    }
+
     const _edges = get(current, `_edges`, {})
     if (shouldFixEdges) {
       const { didFix, edges } = fixEdges(_edges)
@@ -80,6 +89,15 @@ const _Graph = () => {
 
   const getNodes = async () => {
     const current = await getCurrentDiagram()
+    if (!current._nodes) {
+      const nodes = await _get('_nodes', {})
+      if (nodes) {
+        current._nodes = nodes
+        await updateDiagrams(current)
+        await localStorage.removeItem('_nodes')
+      }
+    }
+
     return get(current, `_nodes`, {})
   }
 

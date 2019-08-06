@@ -1,4 +1,4 @@
-import React, { useReducer, useState, useCallback } from 'react'
+import React, { useReducer, useCallback, useState } from 'react'
 import { useEvent } from '../../hooks'
 import { Graph } from '../../util'
 import { Modal } from 'office-ui-fabric-react/lib/Modal'
@@ -29,17 +29,17 @@ const validate = form => {
 
 export const DiagramForm = props => {
   const { initialForm } = props
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const [form, setForm] = useReducer(formReducer, initialForm || {})
   const [errors, setErrors] = useReducer(formReducer, {})
 
-  const openDiagramForm = useCallback(() => {
+  const openDiagramForm = () => {
     setIsOpen(true)
-  }, [setIsOpen])
+  }
 
-  const closeDiagramForm = useCallback(() => {
+  const closeDiagramForm = () => {
     setIsOpen(false)
-  }, [setIsOpen])
+  }
 
   useEvent('toggle-diagram-form', openDiagramForm)
   const broadcastGraphDataUpdate = useEvent('graph-data-updated')
@@ -63,7 +63,7 @@ export const DiagramForm = props => {
       await Graph.setCurrentDiagram(_id)
       broadcastGraphDataUpdate()
     }
-  }, [form])
+  }, [setErrors, form, closeDiagramForm, broadcastGraphDataUpdate])
 
   return (
     <Modal

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
 import { Text } from 'office-ui-fabric-react/lib/Text'
 import { IconButton, DefaultButton, PrimaryButton, Toggle } from 'office-ui-fabric-react'
@@ -23,6 +23,15 @@ const Close = styled(IconButton).attrs(() => ({ iconProps: { iconName: 'ChromeCl
 export const DialogFormView = props => {
   const { dismiss, form, setForm, setErrors, submit, errors } = props
 
+  const handleNameChange = useCallback((event, value) => {
+    if (value) setErrors({ type: 'remove', path: 'name' })
+    setForm({ type: 'update', path: 'name', value })
+  }, [setForm, setErrors])
+
+  const handleCopyChange = useCallback((event, value) => {
+    setForm({ type: 'update', path: 'copy', value })
+  }, [setForm])
+
   return (
     <Form tokens={{ childrenGap: 12 }}>
       <Stack horizontal>
@@ -34,10 +43,7 @@ export const DialogFormView = props => {
         placeholder={`Enter a name for your diagram`}
         errorMessage={errors.name || ''}
         value={form.name || ''}
-        onChange={(event, value) => {
-          if (value) setErrors({ type: 'remove', path: 'name' })
-          setForm({ type: 'update', path: 'name', value })
-        }}
+        onChange={handleNameChange}
       />
       <Toggle
         inlineLabel
@@ -45,9 +51,7 @@ export const DialogFormView = props => {
         offText='Off'
         label='Copy Current Diagram'
         checked={form.copy || false}
-        onChange={(event, value) => {
-          setForm({ type: 'update', path: 'copy', value })
-        }}
+        onChange={handleCopyChange}
       />
       <ButtonGroup horizontal horizontalAlign='space-between'>
         <DefaultButton text='Cancel' onClick={dismiss} />

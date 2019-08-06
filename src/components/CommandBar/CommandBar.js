@@ -10,7 +10,7 @@ import get from 'lodash.get'
 const handleSearch = async (event, value) => {
   const nodes = await Graph.getNodesArray()
 
-  let results = nodes.filter(node => {
+  let results = nodes && nodes.filter(node => {
     const name = get(node, 'data.name', '').toLowerCase()
     return name.includes(value.toLowerCase())
   }).map(({ id }) => id)
