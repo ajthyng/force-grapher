@@ -106,6 +106,7 @@ const _Graph = () => {
   }
 
   const updateDiagrams = async (diagram) => {
+    if (!diagram._id) return
     const diagrams = await getDiagrams()
     diagrams[diagram._id] = diagram
     return _set('_diagrams', diagrams)
@@ -397,12 +398,24 @@ const _Graph = () => {
     return diagram
   }
 
+  const setDiagramName = async ({ id, name }) => {
+    if (!id) throw new Error(`Cannot find diagram to update.`)
+
+    const diagrams = await getDiagrams()
+    const diagram = diagrams[id]
+
+    diagram._name = name
+
+    await updateDiagrams(diagram)
+  }
+
   return {
     getNodes,
     getEdges,
     addNode,
     removeEdge,
     removeDirectedEdge,
+    getDiagrams,
     updateNodePosition,
     updateBatchNodePositions,
     saveUploadedData,
@@ -410,6 +423,7 @@ const _Graph = () => {
     makeNewDiagram,
     getNodesArray,
     setCurrentDiagram,
+    setDiagramName,
     makeNode
   }
 }

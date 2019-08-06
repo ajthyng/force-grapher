@@ -42,6 +42,7 @@ const SearchNodes = () => {
 export const CommandBar = props => {
   const toggleSystemForm = useEvent('toggle-system-form')
   const toggleDiagramForm = useEvent('toggle-diagram-form')
+  const openDiagramBrowser = useEvent('open-diagram-browser')
 
   useEffect(() => {
     const focusSearch = () => {
@@ -53,6 +54,14 @@ export const CommandBar = props => {
   }, [])
 
   const farItems = [
+    {
+      key: 'open',
+      name: 'Open Diagram',
+      iconProps: {
+        iconName: 'OpenFile'
+      },
+      onClick: openDiagramBrowser
+    },
     {
       key: 'search',
       onRender: SearchNodes
