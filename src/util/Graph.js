@@ -5,7 +5,15 @@ import uuid from 'uuid/v4'
 const shouldFixEdges = true
 
 const _Graph = () => {
-  const _get = (key, defaultValue) => JSON.parse(localStorage.getItem(key)) || defaultValue
+  const _get = (key, defaultValue) => {
+    const value = localStorage.getItem(key) || defaultValue
+    try {
+      const parsed = JSON.parse(value)
+      return parsed
+    } catch (err) {
+      return value
+    }
+  }
   const _set = (key, value) => localStorage.setItem(key, JSON.stringify(value))
 
   const fixEdges = oldEdges => {
@@ -33,52 +41,68 @@ const _Graph = () => {
   }
 
   const updateNodePosition = async ({ node, x, y }) => {
-    const nodes = await _get('_nodes', {})
+    const nodes = await getNodes()
     if (nodes[node]) {
       nodes[node].position = {
         x,
         y
       }
     }
-    return _set('_nodes', nodes)
+    return setNodes(nodes)
   }
 
   const updateBatchNodePositions = async (nodes) => {
-    const existingNodes = await _get('_nodes', {})
+    const existingNodes = await getNodes()
     Object.entries(nodes).forEach(([node, { x, y }]) => {
       if (existingNodes[node]) {
         existingNodes[node].position = { x, y }
       }
     })
-    return _set('_nodes', existingNodes)
+    return setNodes(existingNodes)
   }
 
   const getEdges = async () => {
+    const current = await getCurrentDiagram()
+    const _edges = get(current, `_edges`, {})
     if (shouldFixEdges) {
-      const _edges = await _get('_edges', {})
       const { didFix, edges } = fixEdges(_edges)
       if (didFix) {
-        await _set('_edges', edges)
+        await setEdges(edges)
       }
     }
-    return _get('_edges', {})
+    return _edges
   }
 
   const getNodesArray = async () => {
-    const nodes = await _get('_nodes', {})
+    const nodes = await getNodes()
     return Object.values(nodes)
   }
 
   const getNodes = async () => {
-    return _get('_nodes', {})
+    const current = await getCurrentDiagram()
+    return get(current, `_nodes`, {})
+  }
+
+  const getDiagrams = async () => {
+    return _get('_diagrams', {})
+  }
+
+  const updateDiagrams = async (current) => {
+    const diagrams = await getDiagrams()
+    diagrams[current._id] = current
+    return _set('_diagrams', diagrams)
   }
 
   const setEdges = async (edges) => {
-    return _set('_edges', edges)
+    const current = await getCurrentDiagram()
+    current._edges = edges
+    return updateDiagrams(current)
   }
 
   const setNodes = async (nodes) => {
-    return _set('_nodes', nodes)
+    const current = await getCurrentDiagram()
+    current._nodes = nodes
+    return updateDiagrams(current)
   }
 
   const addNode = async (node) => {
@@ -303,9 +327,43 @@ const _Graph = () => {
     }
   }
 
-  const saveUploadedData = async ({ edges, nodes }) => {
-    _set('_edges', edges)
-    _set('_nodes', nodes)
+  const setCurrentDiagram = async (id) => {
+    return _set('_currentDiagram', id)
+  }
+
+  const setName = async (name) => {
+    const current = await getCurrentDiagram()
+    current._name = name
+    return updateDiagrams(current)
+  }
+
+  const saveUploadedData = async ({ edges, nodes, id, name }) => {
+    if (id) {
+      await setCurrentDiagram(id)
+    }
+
+    if (name) {
+      await setName(name)
+    }
+    await setNodes(nodes)
+    await setEdges(edges)
+  }
+
+  const getCurrentDiagram = async () => {
+    const diagrams = await getDiagrams()
+    let current = _get('_currentDiagram', null)
+    const diagramKeys = Object.keys(diagrams)
+    if (!current) {
+      if (diagramKeys.length > 0) {
+        current = diagramKeys[0]
+      } else {
+        current = uuid()
+      }
+      _set('_currentDiagram', current)
+    }
+    const diagram = diagrams[current]
+
+    return diagram || { _id: current }
   }
 
   return {
@@ -317,6 +375,7 @@ const _Graph = () => {
     updateNodePosition,
     updateBatchNodePositions,
     saveUploadedData,
+    getCurrentDiagram,
     getNodesArray,
     makeNode
   }

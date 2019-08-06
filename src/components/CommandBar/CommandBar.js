@@ -83,11 +83,7 @@ export const CommandBar = props => {
         iconName: 'Download'
       },
       onClick: async () => {
-        const edges = await Graph.getEdges()
-        const nodes = await Graph.getNodes()
-
-        const filename = 'TR_Systems'
-        downloadFile(filename, JSON.stringify({ edges, nodes }, null, 2))
+        downloadFile()
       }
     }
   ]

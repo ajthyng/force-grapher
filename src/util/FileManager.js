@@ -1,9 +1,18 @@
 import dayjs from 'dayjs'
 import get from 'lodash.get'
+import uuid from 'uuid/v4'
 import { Graph } from './Graph'
 import { Subject } from './Subject'
 
-export const downloadFile = (filename, data) => {
+export const downloadFile = async () => {
+  const current = await Graph.getCurrentDiagram()
+  const filename = get(current, '_name', 'Default Name')
+  const data = JSON.stringify({
+    id: get(current, '_id'),
+    name: get(current, '_name', 'Generic and Unnamed Diagram With Exceptionally Long Title'),
+    nodes: get(current, '_nodes', {}),
+    edges: get(current, '_edges', {})
+  })
   const element = document.createElement('a')
   element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`)
   element.setAttribute('download', `${filename} - ${dayjs().format('YYYY-MM-DD/THHmmss')}.json`)
@@ -22,8 +31,10 @@ const handleFile = (event) => {
     const data = JSON.parse(reader.result)
     const edges = get(data, 'edges', {})
     const nodes = get(data, 'nodes', {})
+    const id = get(data, 'id', uuid())
+    const name = get(data, 'name', 'Unnamed System')
 
-    Graph.saveUploadedData({ edges, nodes })
+    await Graph.saveUploadedData({ edges, nodes, name, id })
     Subject.next('save-node-entry')
   }
 }
