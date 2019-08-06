@@ -31,7 +31,6 @@ const DiagramContainer = styled.div.attrs(props => ({
 const DiagramName = ({ edit, name, onChange, toggleEdit }) => {
   const checkForEnter = useCallback((event) => {
     if (event.which === 13) { // Enter key pressed
-      console.log(event.which)
       toggleEdit()
     }
   }, [toggleEdit])
@@ -53,32 +52,30 @@ const Diagram = ({ name, id, handleSelect }) => {
   const [diagramName, setDiagramName] = useState(name)
   const graphDataUpdated = useEvent('graph-data-updated')
 
+  const updateGraphDataName = useCallback(async () => {
+    await Graph.setDiagramName({ id, name: diagramName })
+    graphDataUpdated()
+  }, [graphDataUpdated, diagramName, id])
+
+  useEffect(() => {
+    updateGraphDataName()
+  }, [updateGraphDataName])
+
   const toggleEdit = useCallback(() => {
-    setEdit(!edit)
-  }, [edit, setEdit])
+    setEdit(edit => !edit)
+  }, [setEdit])
 
-  const updateDiagramName = useCallback(({ id, name }) => {
-    Graph.setDiagramName(({ id, name }))
-  }, [])
-
-  const selectDiagram = useCallback(async () => {
-    if (edit) return
+  const selectDiagram = useCallback(async (event) => {
     await Graph.setCurrentDiagram(id)
     graphDataUpdated()
-  }, [edit, id, graphDataUpdated])
+  }, [id, graphDataUpdated])
 
   const handleNameChange = useCallback((event, value) => {
     setDiagramName(value)
   }, [setDiagramName])
 
-  useEffect(() => {
-    if (!edit && diagramName !== name && diagramName.length > 0) {
-      updateDiagramName({ id, name: diagramName })
-    }
-  }, [edit, id, diagramName, updateDiagramName, name])
-
   return (
-    <DiagramContainer onClick={selectDiagram} edit={edit}>
+    <DiagramContainer onClick={!edit ? selectDiagram : () => null} edit={edit}>
       <DiagramName toggleEdit={toggleEdit} edit={edit} name={diagramName} onChange={handleNameChange} />
       <ActionButton styles={{ root: { justifySelf: 'flex-end' } }} text='Edit' iconProps={{ iconName: 'Edit' }} onClick={toggleEdit} />
     </DiagramContainer>

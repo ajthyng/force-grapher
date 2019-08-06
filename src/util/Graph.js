@@ -220,7 +220,7 @@ const _Graph = () => {
       const removeEdges = []
       Object.keys(edges).forEach(key => {
         edges[key].forEach((edge, index) => {
-          if (edge.node === node.id) {
+          if (edge && edge.node === node.id) {
             removeEdges.push({ key, index })
           }
         })
@@ -445,6 +445,11 @@ const _Graph = () => {
     await setNodes(updatedNodes)
   }
 
+  const getTitle = async () => {
+    const diagram = await getCurrentDiagram()
+    return diagram._name || ''
+  }
+
   return {
     getNodes,
     getEdges,
@@ -460,6 +465,7 @@ const _Graph = () => {
     makeNewDiagram,
     getNodesArray,
     setCurrentDiagram,
+    getTitle,
     setDiagramName,
     makeNode
   }

@@ -127,7 +127,6 @@ export const SystemsGraph = () => {
   const updateGraph = async () => {
     const nodes = await Graph.getNodes()
     const edges = await Graph.getEdges()
-    lastAdded.current = null
     selectedNodes.current = []
     holdingShift.current = false
     systemsDispatch({ type: 'update', nodes, edges })
@@ -249,7 +248,10 @@ export const SystemsGraph = () => {
   }, [activeNode, displayNodeDetails])
 
   const updateLastAdded = (node) => {
+    console.log('updating last added')
     lastAdded.current = node
+    viewPort.current.scale = graph.current.network.getScale()
+    viewPort.current.position = graph.current.network.getViewPosition()
   }
 
   useEvent('deselect-active-node', resetActiveNode)
@@ -295,24 +297,28 @@ export const SystemsGraph = () => {
       graph.current.network.on('dragEnd', handleNodeDrag)
 
       console.log('redrawing')
+      console.log('last added', lastAdded.current)
       graph.current.setData(systems)
-      if (viewPort.current.position && viewPort.current.scale) {
+      if (viewPort.current.position && viewPort.current.scale && !lastAdded.current) {
         graph.current.network.moveTo({
           position: viewPort.current.position,
           scale: viewPort.current.scale
         })
         viewPort.current = {}
-      }
-
-      if (lastAdded.current) {
-        graph.current.network.focus(lastAdded.current, {
-          scale: 1,
-          animation: {
-            duration: 300,
-            easingFunction: 'easeInOutCubic'
-          }
-        })
-        graph.current.network.selectNodes([lastAdded.current])
+      } else if (lastAdded.current) {
+        try {
+          graph.current.network.fit({
+            nodes: [lastAdded.current],
+            animation: {
+              duration: 300,
+              easingFunction: 'easeInOutQuad'
+            }
+          })
+          graph.current.network.selectNodes([lastAdded.current])
+          viewPort.current = {}
+        } catch {
+          lastAdded.current = null
+        }
       }
     }
   }, [systems, handleNodeClick, handleNodeDrag, handleNodeSelect])
