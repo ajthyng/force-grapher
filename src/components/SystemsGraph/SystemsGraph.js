@@ -89,6 +89,7 @@ const buildGraphData = (nodes, edges) => {
     const edgeList = edges[nodeId]
 
     edgeList.forEach(edge => {
+      if (!edge) return
       graphData.edges.push({
         from: nodeId,
         to: edge.node,
@@ -115,6 +116,7 @@ const buildGraphData = (nodes, edges) => {
 export const SystemsGraph = () => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, { nodes: [], edges: [] })
   const [activeNode, setActiveNode] = useState()
+  const viewPort = useRef({})
   const lastAdded = useRef()
   const selectedNodes = useRef([])
   const holdingShift = useRef(false)
@@ -158,6 +160,14 @@ export const SystemsGraph = () => {
       })
     }
   }
+
+  const deleteSelectedNodes = useCallback(async () => {
+    await Graph.deleteNodes(selectedNodes.current)
+    viewPort.current.scale = graph.current.network.getScale()
+    viewPort.current.position = graph.current.network.getViewPosition()
+    selectedNodes.current = []
+    broadcastGraphDataUpdate()
+  }, [])
 
   useEffect(() => {
     updateGraph()
@@ -209,10 +219,15 @@ export const SystemsGraph = () => {
   }, [])
 
   const handleKeyDown = useCallback(event => {
-    if (event.ctrlKey && event.keyCode === 70) {
+    if (event.keyCode === 46 || event.keyCode === 8) { // Delete or Backspace
+      Subject.next('delete-selected-nodes')
+    }
+
+    if (event.ctrlKey && event.keyCode === 70) { // Control + f Shortcut
       event.preventDefault()
       Subject.next('focus-search-bar')
     }
+
     if (event.shiftKey && !holdingShift.current) {
       holdingShift.current = true
     }
@@ -235,9 +250,10 @@ export const SystemsGraph = () => {
     lastAdded.current = node
   }
 
-  useEvent('graph-data-updated', updateGraph)
+  const broadcastGraphDataUpdate = useEvent('graph-data-updated', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
   useEvent('node-added', updateLastAdded)
+  useEvent('delete-selected-nodes', deleteSelectedNodes)
 
   useEffect(() => {
     const options = {
@@ -279,6 +295,14 @@ export const SystemsGraph = () => {
 
       console.log('redrawing')
       graph.current.setData(systems)
+      if (viewPort.current.position && viewPort.current.scale) {
+        graph.current.network.moveTo({
+          position: viewPort.current.position,
+          scale: viewPort.current.scale
+        })
+        viewPort.current = {}
+      }
+
       if (lastAdded.current) {
         graph.current.network.focus(lastAdded.current, {
           scale: 1,

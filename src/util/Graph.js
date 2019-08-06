@@ -1,6 +1,7 @@
 import get from 'lodash.get'
 import differenceby from 'lodash.differenceby'
 import uuid from 'uuid/v4'
+import unset from 'lodash.unset'
 
 const shouldFixEdges = true
 
@@ -25,9 +26,10 @@ const _Graph = () => {
       const nodeEdges = edges[key]
       const currentEdgeID = key
       nodeEdges.forEach(edge => {
+        if (!edge) return
         if (edge.node === key) return
         const otherEdges = edges[edge.node]
-        const otherEdgeIndex = otherEdges && otherEdges.findIndex(edge => edge.node === currentEdgeID)
+        const otherEdgeIndex = otherEdges && otherEdges.findIndex(edge => (edge && edge.node === currentEdgeID))
         if (otherEdgeIndex >= 0) {
           otherEdges.splice(otherEdgeIndex, 1)
           if (!didFix) didFix = true
@@ -409,6 +411,40 @@ const _Graph = () => {
     await updateDiagrams(diagram)
   }
 
+  const deleteNodes = async (nodes) => {
+    if (!Array.isArray(nodes)) return
+    const _edges = await getEdges()
+    const _nodes = await getNodes()
+
+    const updatedNodes = { ..._nodes }
+    const updatedEdges = { ..._edges }
+
+    for (let i = 0; i < nodes.length; i++) {
+      unset(updatedNodes, `[${nodes[i]}]`)
+    }
+
+    const edgeKeys = Object.keys(updatedEdges)
+
+    nodes.forEach(node => {
+      const edgesToRemove = []
+      edgeKeys.forEach(key => {
+        const edges = updatedEdges[key] || []
+        edges.forEach((edge, index) => {
+          if (edge && edge.node === node) {
+            edgesToRemove.push({ index, key })
+          }
+        })
+      })
+      unset(updatedEdges, `[${node}]`)
+      edgesToRemove.forEach(edge => {
+        unset(updatedEdges, `[${edge.key}][${edge.index}]`)
+      })
+    })
+
+    await setEdges(updatedEdges)
+    await setNodes(updatedNodes)
+  }
+
   return {
     getNodes,
     getEdges,
@@ -420,6 +456,7 @@ const _Graph = () => {
     updateBatchNodePositions,
     saveUploadedData,
     getCurrentDiagram,
+    deleteNodes,
     makeNewDiagram,
     getNodesArray,
     setCurrentDiagram,
