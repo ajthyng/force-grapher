@@ -87,9 +87,9 @@ const _Graph = () => {
     return _get('_diagrams', {})
   }
 
-  const updateDiagrams = async (current) => {
+  const updateDiagrams = async (diagram) => {
     const diagrams = await getDiagrams()
-    diagrams[current._id] = current
+    diagrams[diagram._id] = diagram
     return _set('_diagrams', diagrams)
   }
 
@@ -366,6 +366,18 @@ const _Graph = () => {
     return diagram || { _id: current }
   }
 
+  const makeNewDiagram = async ({ name, edges, nodes }) => {
+    const _id = uuid()
+    const diagram = {
+      _id,
+      _name: name,
+      _edges: edges,
+      _nodes: nodes
+    }
+
+    return updateDiagrams(diagram)
+  }
+
   return {
     getNodes,
     getEdges,
@@ -376,6 +388,7 @@ const _Graph = () => {
     updateBatchNodePositions,
     saveUploadedData,
     getCurrentDiagram,
+    makeNewDiagram,
     getNodesArray,
     makeNode
   }
