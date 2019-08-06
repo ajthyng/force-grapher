@@ -33,13 +33,13 @@ export const DiagramForm = props => {
   const [form, setForm] = useReducer(formReducer, initialForm || {})
   const [errors, setErrors] = useReducer(formReducer, {})
 
-  const openDiagramForm = () => {
+  const openDiagramForm = useCallback(() => {
     setIsOpen(true)
-  }
+  }, [setIsOpen])
 
-  const closeDiagramForm = () => {
+  const closeDiagramForm = useCallback(() => {
     setIsOpen(false)
-  }
+  }, [setIsOpen])
 
   useEvent('toggle-diagram-form', openDiagramForm)
   const broadcastGraphDataUpdate = useEvent('graph-data-updated')
