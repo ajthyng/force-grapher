@@ -26,8 +26,10 @@ export const SystemFormView = props => {
     updateNodeForm,
     connections,
     addConnection,
-    edit
+    edit,
+    loading
   } = props
+  if (loading) return null
   return (
     <>
       <TextField

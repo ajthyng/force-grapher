@@ -1,6 +1,6 @@
-import React, { useState, useReducer } from 'react'
+import React, { useState, useEffect, useReducer } from 'react'
 import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel'
-import { NodeManager, Graph } from '../../util'
+import { Graph } from '../../util'
 import { Stack } from 'office-ui-fabric-react/lib/Stack'
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react'
 import { useEvent } from '../../hooks'
@@ -112,8 +112,8 @@ const connectionReducer = (connections, action) => {
   }
 }
 
-const getSystems = () => {
-  const nodes = NodeManager.getNodes()
+const getSystems = async () => {
+  const nodes = await Graph.getNodesArray()
   return nodes.map(node => ({ key: node.id, text: node.data.name })).sort((a, b) => {
     if (a.text < b.text) return -1
     if (a.text > b.text) return 1
@@ -139,7 +139,6 @@ const validate = (addNodeForm, nodeFormErrors) => {
 
   if (addNodeForm.url) {
     const error = checkURL(addNodeForm.url)
-    console.log(errors)
     if (error) errors.url = error
   }
 
@@ -158,10 +157,11 @@ const validate = (addNodeForm, nodeFormErrors) => {
 }
 
 export const SystemForm = (props) => {
+  const [loading, setLoading] = useState(true)
   const [edit, setEdit] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [addNodeForm, updateNodeForm] = useReducer(addNodeReducer, {})
-  const [existingSystems, setExistingSystems] = useState(getSystems())
+  const [existingSystems, setExistingSystems] = useState()
   const [nodeFormErrors, setNodeFormErrors] = useState({})
   const [connections, connDispatch] = useReducer(connectionReducer, [])
 
@@ -240,10 +240,15 @@ export const SystemForm = (props) => {
     setEdit(false)
   }
 
-  const updateExistingSystems = () => {
-    const systems = getSystems()
+  const updateExistingSystems = async () => {
+    const systems = await getSystems()
+    setLoading(false)
     setExistingSystems(systems)
   }
+
+  useEffect(() => {
+    updateExistingSystems()
+  }, [])
 
   const broadcastNodeSave = useEvent('save-node-entry', updateExistingSystems)
   const nodeAdded = useEvent('node-added')
@@ -263,6 +268,7 @@ export const SystemForm = (props) => {
       type={PanelType.medium}
     >
       <SystemFormView
+        loading={loading}
         edit={edit}
         existingSystems={existingSystems}
         nodeFormErrors={nodeFormErrors}

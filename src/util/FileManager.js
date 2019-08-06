@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import get from 'lodash.get'
-import { NodeManager } from './NodeManager'
+import { Graph } from './Graph'
 import { Subject } from './Subject'
 
 export const downloadFile = (filename, data) => {
@@ -23,7 +23,7 @@ const handleFile = (event) => {
     const edges = get(data, 'edges', {})
     const nodes = get(data, 'nodes', {})
 
-    NodeManager.saveUploadedData({ edges, nodes })
+    Graph.saveUploadedData({ edges, nodes })
     Subject.next('save-node-entry')
   }
 }

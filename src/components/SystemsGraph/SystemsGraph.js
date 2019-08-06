@@ -115,7 +115,7 @@ const buildGraphData = (nodes, edges) => {
 export const SystemsGraph = () => {
   const [systems, systemsDispatch] = useReducer(systemsReducer, { nodes: [], edges: [] })
   const [activeNode, setActiveNode] = useState()
-  const [lastAdded, setLastAdded] = useState()
+  const lastAdded = useRef()
   const selectedNodes = useRef([])
   const holdingShift = useRef(false)
 
@@ -229,7 +229,7 @@ export const SystemsGraph = () => {
   }, [activeNode, displayNodeDetails])
 
   const updateLastAdded = (node) => {
-    setLastAdded(node)
+    lastAdded.current = node
   }
 
   useEvent('save-node-entry', updateGraph)
@@ -276,17 +276,18 @@ export const SystemsGraph = () => {
 
       console.log('redrawing')
       graph.current.setData(systems)
-      if (lastAdded) {
-        graph.current.network.focus(lastAdded, {
-          scale: 3,
+      if (lastAdded.current) {
+        graph.current.network.focus(lastAdded.current, {
+          scale: 1,
           animation: {
             duration: 300,
             easingFunction: 'easeInOutCubic'
           }
         })
+        graph.current.network.selectNodes([lastAdded.current])
       }
     }
-  }, [systems, handleNodeClick, handleNodeDrag, lastAdded, handleNodeSelect])
+  }, [systems, handleNodeClick, handleNodeDrag, handleNodeSelect])
 
   return (
     <>

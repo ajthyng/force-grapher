@@ -145,10 +145,12 @@ const _Graph = () => {
     let node = null
     if (id) {
       const nodes = await getNodes()
+      const position = get(nodes, `[${id}].position`, { x: undefined, y: undefined })
       node = {
         id,
         edges: [],
         previousEdges: nodes[id].edges.map(item => ({ ...item })),
+        position,
         data: {
           ...nodes[id].data,
           ...data
@@ -301,6 +303,11 @@ const _Graph = () => {
     }
   }
 
+  const saveUploadedData = async ({ edges, nodes }) => {
+    _set('_edges', edges)
+    _set('_nodes', nodes)
+  }
+
   return {
     getNodes,
     getEdges,
@@ -309,6 +316,7 @@ const _Graph = () => {
     removeDirectedEdge,
     updateNodePosition,
     updateBatchNodePositions,
+    saveUploadedData,
     getNodesArray,
     makeNode
   }
