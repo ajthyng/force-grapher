@@ -125,6 +125,9 @@ export const SystemsGraph = () => {
   const updateGraph = async () => {
     const nodes = await Graph.getNodes()
     const edges = await Graph.getEdges()
+    lastAdded.current = null
+    selectedNodes.current = []
+    holdingShift.current = false
     systemsDispatch({ type: 'update', nodes, edges })
   }
 
@@ -232,7 +235,7 @@ export const SystemsGraph = () => {
     lastAdded.current = node
   }
 
-  useEvent('save-node-entry', updateGraph)
+  useEvent('graph-data-updated', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
   useEvent('node-added', updateLastAdded)
 

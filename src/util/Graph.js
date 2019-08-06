@@ -375,7 +375,8 @@ const _Graph = () => {
       _nodes: nodes
     }
 
-    return updateDiagrams(diagram)
+    await updateDiagrams(diagram)
+    return diagram
   }
 
   return {
@@ -390,6 +391,7 @@ const _Graph = () => {
     getCurrentDiagram,
     makeNewDiagram,
     getNodesArray,
+    setCurrentDiagram,
     makeNode
   }
 }

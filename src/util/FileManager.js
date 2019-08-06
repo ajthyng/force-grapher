@@ -35,7 +35,7 @@ const handleFile = (event) => {
     const name = get(data, 'name', 'Unnamed System')
 
     await Graph.saveUploadedData({ edges, nodes, name, id })
-    Subject.next('save-node-entry')
+    Subject.next('graph-data-updated')
   }
 }
 

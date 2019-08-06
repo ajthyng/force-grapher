@@ -40,7 +40,9 @@ const SearchNodes = () => {
 }
 
 export const CommandBar = props => {
-  const toggleLeftPanel = useEvent('toggle-left-panel')
+  const toggleSystemForm = useEvent('toggle-system-form')
+  const toggleDiagramForm = useEvent('toggle-diagram-form')
+
   useEffect(() => {
     const focusSearch = () => {
       const searchBox = document.querySelector('#search-box-nodes')
@@ -59,12 +61,31 @@ export const CommandBar = props => {
 
   const nearItems = [
     {
-      key: 'addNode',
-      name: 'Add System',
+      key: 'add',
+      name: 'Add',
       iconProps: {
         iconName: 'Add'
       },
-      onClick: toggleLeftPanel
+      subMenuProps: {
+        items: [
+          {
+            key: 'system',
+            name: 'System',
+            onClick: toggleSystemForm,
+            iconProps: {
+              iconName: 'GitGraph'
+            }
+          },
+          {
+            key: 'diagram',
+            name: 'Diagram',
+            onClick: toggleDiagramForm,
+            iconProps: {
+              iconName: 'VisioDiagram'
+            }
+          }
+        ]
+      }
     },
     {
       key: 'upload',

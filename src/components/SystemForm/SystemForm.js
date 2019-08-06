@@ -232,7 +232,7 @@ export const SystemForm = (props) => {
     }
   }
 
-  useEvent('toggle-left-panel', toggle)
+  useEvent('toggle-system-form', toggle)
   const dismiss = () => {
     resetForm()
     resetConnections()
@@ -250,7 +250,7 @@ export const SystemForm = (props) => {
     updateExistingSystems()
   }, [])
 
-  const broadcastNodeSave = useEvent('save-node-entry', updateExistingSystems)
+  const broadcastNodeSave = useEvent('graph-data-updated', updateExistingSystems)
   const nodeAdded = useEvent('node-added')
 
   return (
