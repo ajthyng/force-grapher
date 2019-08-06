@@ -133,6 +133,8 @@ export const SystemsGraph = () => {
     systemsDispatch({ type: 'update', nodes, edges })
   }
 
+  const broadcastGraphDataUpdate = useEvent('graph-data-updated', updateGraph)
+
   const updateSearchResults = (results) => {
     if (graph.current.network) {
       if (results.length <= 0) {
@@ -167,7 +169,7 @@ export const SystemsGraph = () => {
     viewPort.current.position = graph.current.network.getViewPosition()
     selectedNodes.current = []
     broadcastGraphDataUpdate()
-  }, [])
+  }, [broadcastGraphDataUpdate])
 
   useEffect(() => {
     updateGraph()
@@ -250,7 +252,6 @@ export const SystemsGraph = () => {
     lastAdded.current = node
   }
 
-  const broadcastGraphDataUpdate = useEvent('graph-data-updated', updateGraph)
   useEvent('deselect-active-node', resetActiveNode)
   useEvent('node-added', updateLastAdded)
   useEvent('delete-selected-nodes', deleteSelectedNodes)
