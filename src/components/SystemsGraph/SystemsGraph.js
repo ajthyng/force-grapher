@@ -163,11 +163,14 @@ export const SystemsGraph = () => {
   }
 
   const deleteSelectedNodes = useCallback(async () => {
-    await Graph.deleteNodes(selectedNodes.current)
-    viewPort.current.scale = graph.current.network.getScale()
-    viewPort.current.position = graph.current.network.getViewPosition()
-    selectedNodes.current = []
-    broadcastGraphDataUpdate()
+    if (Array.isArray(selectedNodes.current) && selectedNodes.current.length > 0) {
+      await Graph.deleteNodes(selectedNodes.current)
+      viewPort.current.scale = graph.current.network.getScale()
+      viewPort.current.position = graph.current.network.getViewPosition()
+      selectedNodes.current = []
+      lastAdded.current = null
+      broadcastGraphDataUpdate()
+    }
   }, [broadcastGraphDataUpdate])
 
   useEffect(() => {
