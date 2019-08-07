@@ -60,7 +60,6 @@ export const DiagramTitle = props => {
   const [current, dispatch] = useReducer(titleReducer, {})
 
   const updateTitle = useCallback(() => {
-    console.log('update title function')
     getTitle(dispatch)
   }, [dispatch])
 

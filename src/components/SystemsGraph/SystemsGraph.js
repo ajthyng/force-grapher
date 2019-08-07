@@ -248,7 +248,6 @@ export const SystemsGraph = () => {
   }, [activeNode, displayNodeDetails])
 
   const updateLastAdded = (node) => {
-    console.log('updating last added')
     lastAdded.current = node
     viewPort.current.scale = graph.current.network.getScale()
     viewPort.current.position = graph.current.network.getViewPosition()
@@ -296,8 +295,6 @@ export const SystemsGraph = () => {
       graph.current.network.on('click', handleNodeClick)
       graph.current.network.on('dragEnd', handleNodeDrag)
 
-      console.log('redrawing')
-      console.log('last added', lastAdded.current)
       graph.current.setData(systems)
       if (viewPort.current.position && viewPort.current.scale && !lastAdded.current) {
         graph.current.network.moveTo({
