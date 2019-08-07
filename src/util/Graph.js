@@ -153,7 +153,7 @@ const _Graph = () => {
 
     if (!Array.isArray(_edges[node1.id])) _edges[node1.id] = []
 
-    const node2TargetID = _edges[node1.id].findIndex(({ node }) => node === node2.id)
+    const node2TargetID = _edges[node1.id].findIndex(edge => (edge && edge.node === node2.id))
 
     if (node2TargetID >= 0) {
       // Replace edge because it exists already
@@ -171,7 +171,7 @@ const _Graph = () => {
 
     const _edges = await getEdges()
 
-    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(({ node }) => node !== node2.id)
+    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(edge => (edge && edge.node !== node2.id))
 
     await setEdges(_edges)
   }
@@ -181,7 +181,7 @@ const _Graph = () => {
 
     const _edges = await getEdges()
 
-    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(({ node }) => node !== node2.id)
+    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(edge => (edge && edge.node !== node2.id))
 
     await setEdges(_edges)
   }
@@ -297,7 +297,7 @@ const _Graph = () => {
         id: get(edge, 'id')
       }
 
-      const prevEdge = previousEdges.find(({ id }) => id === edge.id)
+      const prevEdge = previousEdges.find(prev => (prev && prev.id === edge.id))
 
       const prev = {
         read: get(prevEdge, `data.read`, read),
