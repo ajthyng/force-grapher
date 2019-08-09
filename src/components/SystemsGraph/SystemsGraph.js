@@ -35,8 +35,8 @@ const getShape = (type) => {
       return { shape: 'icon', shapeProperties: { size: 25 }, icon: { face: 'Ionicons', code: '\uf381', color: '#FFF' } }
     case 'oncampus':
     default:
-      // Square Shape
-      return { shape: 'icon', shapeProperties: { size: 25 }, icon: { face: 'Ionicons', code: '\uf384', color: '#FFF' } }
+      // Star Shape
+      return { shape: 'dot', size: 15 }
   }
 }
 
@@ -94,9 +94,7 @@ const buildGraphData = (nodes, edges) => {
         from: nodeId,
         to: edge.node,
         smooth: {
-          enabled: true,
-          type: 'cubizBezier',
-          roundness: 0.15
+          enabled: true
         },
         color: {
           color: getLinkColor(get(edge, 'data.type.id')),
@@ -325,7 +323,7 @@ export const SystemsGraph = () => {
 
   return (
     <>
-      <div style={{ overflow: 'hidden', height: 'calc(100% - 44px)' }} ref={graphContainer} id='graph' />
+      <div style={{ overflow: 'hidden', flex: 1 }} ref={graphContainer} id='graph' />
       <Legend />
     </>
   )

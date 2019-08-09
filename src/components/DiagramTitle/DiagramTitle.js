@@ -17,6 +17,7 @@ const Container = styled.div.attrs(props => ({
   background-color: white;
   border-radius: 2px;
   box-shadow: 0 3px 5px #30303030;
+  z-index: 10;
 
   @media only screen and (max-width: 767px) {
     display: none;

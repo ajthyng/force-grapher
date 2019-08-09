@@ -51,11 +51,36 @@ const Label = styled.span`
   font-size: 18px;
 `
 
+const CircleBox = styled.div`
+  min-width: 60px;
+  width: 60px;
+  margin: 8px;
+`
+
+const Circle = styled.div`
+  width: 45px;
+  height: 45px;
+  border-radius: 25px;
+  background-color: white;
+  box-shadow: 2px 2px 4px #808080;
+`
+
 const Node = props => {
   const Icon = props.icon
   return (
     <NodeContainer>
       <Icon />
+      <Label>{props.label}</Label>
+    </NodeContainer>
+  )
+}
+
+const CircleNode = props => {
+  return (
+    <NodeContainer>
+      <CircleBox>
+        <Circle />
+      </CircleBox>
       <Label>{props.label}</Label>
     </NodeContainer>
   )
@@ -96,7 +121,7 @@ const Edge = props => {
 export const Legend = props => {
   return (
     <LegendContainer>
-      <Node icon={OnCampus} label='On Campus System' />
+      <CircleNode icon={OnCampus} label='On Campus System' />
       <Node icon={External} label='External System' />
       <Node icon={Cloud} label='Cloud System' />
       <Edge color='#005481' dashed label='Custom Interface' />
