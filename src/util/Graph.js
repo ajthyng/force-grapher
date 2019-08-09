@@ -467,11 +467,24 @@ const _Graph = () => {
     }
   }
 
+  const countEdges = async (id) => {
+    const edges = await getEdges()
+    let count = get(edges, `[${id}].length`)
+    console.log(count)
+    Object.values(edges).forEach(list => {
+      list.forEach(edge => {
+        if (get(edge, 'node') === id) count++
+      })
+    })
+    return count || 1
+  }
+
   return {
     getNodes,
     getEdges,
     addNode,
     removeEdge,
+    countEdges,
     removeDirectedEdge,
     getDiagrams,
     updateNodePosition,

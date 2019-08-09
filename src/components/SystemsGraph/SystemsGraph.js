@@ -48,6 +48,16 @@ const getArrowDirection = (edge) => {
   return 'to'
 }
 
+const countEdges = (id, edges) => {
+  let count = get(edges, `[${id}].length`, 0)
+  Object.values(edges).forEach(list => {
+    list.forEach(edge => {
+      if (get(edge, 'node') === id) count++
+    })
+  })
+  return count > 5 ? count : 1
+}
+
 const buildGraphData = (nodes, edges) => {
   const graphData = {
     nodes: [],
@@ -69,6 +79,19 @@ const buildGraphData = (nodes, edges) => {
         strokeWidth: 2,
         strokeColor: '#FFFFFF'
       },
+      scaling: {
+        min: 15,
+        max: 40,
+        label: {
+          enabled: true
+        },
+        customScalingFunction: (min, max, total, value) => {
+          if (min === max) return 0.5
+          const scale = 1 / (max - min)
+          return Math.max(0, (value - min) * scale)
+        }
+      },
+      value: countEdges(key, edges),
       shadow: {
         enabled: true,
         size: 4,
