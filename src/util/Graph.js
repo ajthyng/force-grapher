@@ -372,9 +372,9 @@ const _Graph = () => {
 
   const getCurrentDiagram = async () => {
     const diagrams = await getDiagrams()
-    let current = _get('_currentDiagram', null)
-    const diagramKeys = Object.keys(diagrams)
-    if (!current) {
+    let current = await _get('_currentDiagram', null)
+    const diagramKeys = Object.keys(diagrams).filter(key => !diagrams[key]._deleted)
+    if (!current || get(diagrams, '[current]._deleted')) {
       if (diagramKeys.length > 0) {
         current = diagramKeys[0]
       } else {
@@ -406,6 +406,7 @@ const _Graph = () => {
     const diagrams = await getDiagrams()
     const diagram = diagrams[id]
 
+    if (!diagram) return
     diagram._name = name
 
     await updateDiagrams(diagram)
@@ -450,6 +451,22 @@ const _Graph = () => {
     return diagram._name || ''
   }
 
+  const deleteDiagram = async (id) => {
+    let diagrams = await getDiagrams()
+    const diagram = diagrams[id]
+    if (diagram) {
+      diagram._deleted = true
+      await updateDiagrams(diagram)
+      const activeDiagrams = Object.values(diagrams).filter(diagram => !diagram._deleted)
+      if (activeDiagrams.length > 1) {
+        diagrams = await getDiagrams()
+        setCurrentDiagram(Object.keys(diagrams)[0])
+      } else {
+        localStorage.removeItem('_currentDiagram')
+      }
+    }
+  }
+
   return {
     getNodes,
     getEdges,
@@ -461,6 +478,7 @@ const _Graph = () => {
     updateBatchNodePositions,
     saveUploadedData,
     getCurrentDiagram,
+    deleteDiagram,
     deleteNodes,
     makeNewDiagram,
     getNodesArray,

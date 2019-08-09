@@ -31,7 +31,7 @@ const getDiagrams = async dispatch => {
   dispatch({ type: 'loading' })
   try {
     const diagramsObject = await Graph.getDiagrams()
-    const diagrams = Object.values(diagramsObject)
+    const diagrams = Object.values(diagramsObject).filter(diagram => !diagram._deleted)
     dispatch({ type: 'success', diagrams })
   } catch (error) {
     dispatch({ type: 'failure', error })
@@ -50,13 +50,20 @@ export const DiagramBrowser = props => {
     setIsOpen(false)
   }, [setIsOpen])
 
+  const handleDiagramDeletion = useCallback(() => {
+    if (isOpen) {
+      getDiagrams(dispatch)
+    }
+  }, [isOpen, dispatch])
+
   useEvent('open-diagram-browser', openDiagramBrowser)
+  useEvent('diagram-deleted', handleDiagramDeletion)
 
   useEffect(() => {
     if (isOpen) {
       getDiagrams(dispatch)
     }
-  }, [isOpen])
+  }, [isOpen, dispatch])
 
   return (
     <Modal

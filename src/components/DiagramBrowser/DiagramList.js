@@ -51,6 +51,7 @@ const Diagram = ({ name, id, handleSelect }) => {
   const [edit, setEdit] = useState(false)
   const [diagramName, setDiagramName] = useState(name)
   const graphDataUpdated = useEvent('graph-data-updated')
+  const broadcastDiagramDeletion = useEvent('diagram-deleted')
 
   const updateGraphDataName = useCallback(async () => {
     await Graph.setDiagramName({ id, name: diagramName })
@@ -70,6 +71,13 @@ const Diagram = ({ name, id, handleSelect }) => {
     graphDataUpdated()
   }, [id, graphDataUpdated])
 
+  const deleteDiagram = useCallback(async (event) => {
+    const diagram = await Graph.getCurrentDiagram()
+    await Graph.deleteDiagram(diagram._id)
+    graphDataUpdated()
+    broadcastDiagramDeletion()
+  }, [graphDataUpdated, broadcastDiagramDeletion])
+
   const handleNameChange = useCallback((event, value) => {
     setDiagramName(value)
   }, [setDiagramName])
@@ -77,7 +85,10 @@ const Diagram = ({ name, id, handleSelect }) => {
   return (
     <DiagramContainer onClick={!edit ? selectDiagram : () => null} edit={edit}>
       <DiagramName toggleEdit={toggleEdit} edit={edit} name={diagramName} onChange={handleNameChange} />
-      <ActionButton styles={{ root: { justifySelf: 'flex-end' } }} text='Edit' iconProps={{ iconName: 'Edit' }} onClick={toggleEdit} />
+      <div style={{display: 'flex', alignItems: 'center', justifyItems: 'flex-end', flexDirection: 'row'}}>
+        <ActionButton styles={{ root: { justifySelf: 'flex-end' } }} text='Edit' iconProps={{ iconName: 'Edit' }} onClick={toggleEdit} />
+        <ActionButton styles={{ root: { justifySelf: 'flex-end' } }} text='Delete' iconProps={{ iconName: 'Delete' }} onClick={deleteDiagram} /> 
+      </div>
     </DiagramContainer>
   )
 }
