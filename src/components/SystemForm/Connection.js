@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown'
+import { Fabric } from 'office-ui-fabric-react/lib/Fabric'
+import { mergeStyles } from 'office-ui-fabric-react/lib/index'
+import { ComboBox } from 'office-ui-fabric-react/lib/ComboBox'
 import { ConnectionReadWrite } from './ConnectionReadWrite'
 import get from 'lodash.get'
 import { IconButton } from 'office-ui-fabric-react'
@@ -26,6 +29,12 @@ const ConnectionContainer = styled.div`
     align-self: flex-end;
   }
 `
+
+const wrapperClassName = mergeStyles({
+  selectors: {
+    '& .ms-ComboBox': { width: '100%' }
+  }
+})
 
 export const Connection = props => {
   const { handleRemove, id, edit, addNodeForm, nodeFormErrors, setNodeFormErrors, existingSystems, updateNodeForm } = props
@@ -62,26 +71,31 @@ export const Connection = props => {
           handleRemove()
         }}
       />
-      <Dropdown
-        label='Connected To'
-        placeholder={`What does this system connect to?`}
-        options={existingSystems}
-        errorMessage={targetError}
-        selectedKey={selectedTarget}
-        onChange={(event, value) => {
-          updateNodeForm({
-            path: `connections[${id}].connectedTo`,
-            value: { key: value.key, text: value.text }
-          })
-          if (`${id}` in nodeFormErrors) {
-            const errors = {
-              ...nodeFormErrors
+      <Fabric style={{ alignSelf: 'stretch' }} className={wrapperClassName}>
+        <ComboBox
+          allowFreeform
+          autoComplete='on'
+          autofill
+          label='Connected To'
+          placeholder={`What does this system connect to?`}
+          options={existingSystems}
+          errorMessage={targetError}
+          selectedKey={selectedTarget}
+          onChange={(event, value) => {
+            updateNodeForm({
+              path: `connections[${id}].connectedTo`,
+              value: { key: value.key, text: value.text }
+            })
+            if (`${id}` in nodeFormErrors) {
+              const errors = {
+                ...nodeFormErrors
+              }
+              delete errors[id]
+              setNodeFormErrors(errors)
             }
-            delete errors[id]
-            setNodeFormErrors(errors)
-          }
-        }}
-      />
+          }}
+        />
+      </Fabric>
       <Dropdown
         label='Interface'
         options={[

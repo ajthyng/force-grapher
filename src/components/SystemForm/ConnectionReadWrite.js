@@ -22,12 +22,12 @@ export const ConnectionReadWrite = props => {
         if (canChange('read', value)(read, write)) {
           onChange('read', value)
         }
-      }} label='Read' />
+      }} label='Receives Data' />
       <Checkbox checked={write} onChange={(event, value) => {
         if (canChange('write', value)(read, write)) {
           onChange('write', value)
         }
-      }} label='Write' />
+      }} label='Sends Data' />
     </Stack>
   )
 }
