@@ -44,7 +44,9 @@ const getArrowDirection = (edge) => {
   const read = get(edge, 'data.read')
   const write = get(edge, 'data.write')
 
-  if (read && write) return 'from, to'
+  if (read && write) return 'middle, from'
+  if (write) return 'middle'
+  if (read) return 'to'
   return 'to'
 }
 
@@ -117,7 +119,9 @@ const buildGraphData = (nodes, edges) => {
         from: nodeId,
         to: edge.node,
         smooth: {
-          enabled: true
+          enabled: true,
+          type: 'cubicBezier',
+          roundness: 0.2
         },
         color: {
           color: getLinkColor(get(edge, 'data.type.id')),
@@ -283,7 +287,7 @@ export const SystemsGraph = () => {
 
   useEffect(() => {
     const options = {
-      autoResize: false,
+      autoResize: true,
       interaction: {
         hover: true,
         hoverConnectedEdges: true
@@ -346,7 +350,7 @@ export const SystemsGraph = () => {
 
   return (
     <>
-      <div style={{ overflow: 'hidden', flex: 1 }} ref={graphContainer} id='graph' />
+      <div style={{ position: 'relative', overflow: 'hidden', height: '100%' }} ref={graphContainer} id='graph' />
       <Legend />
     </>
   )

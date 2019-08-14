@@ -121,6 +121,11 @@ export const CommandBar = props => {
   return (
     <div>
       <OfficeCommandBar
+        styles={{
+          root: {
+            boxShadow: '0 2px 2px #30303030'
+          }
+        }}
         items={nearItems}
         farItems={farItems}
       />

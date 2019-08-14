@@ -1,22 +1,31 @@
 import React from 'react'
 import styled from 'styled-components'
-import { DiagramForm, DiagramBrowser, DiagramTitle, SystemsGraph, NodeDetail, SystemForm, CommandBar } from './components'
+import { DiagramForm, DiagramBrowser, DiagramTitle, SystemsGraph, NodeDetail, SystemForm, CommandBar, Layout } from './components'
 
-const Page = styled.div`
+const { Header, Content } = Layout
+
+const Page = styled(Layout)`
+  height: 100vh;
+`
+
+const GraphArea = styled(Content)`
   background-color: #e8e3db;
-  flex: 1;
-  flex-direction: column;
-  display: flex;
 `
 
 function App () {
   return (
-    <Page>
-      <CommandBar />
+    <Page
+      sidebarSize={0}
+    >
+      <Header>
+        <CommandBar />
+      </Header>
       <DiagramTitle />
       <DiagramForm />
       <DiagramBrowser />
-      <SystemsGraph />
+      <GraphArea>
+        <SystemsGraph />
+      </GraphArea>
       <SystemForm />
       <NodeDetail />
     </Page>
