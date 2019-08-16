@@ -7,15 +7,35 @@ import { Subject } from './Subject'
 export const downloadFile = async () => {
   const current = await Graph.getCurrentDiagram()
   const filename = get(current, '_name', 'Default Name')
+
+  const edgeKeys = Object.keys(get(current, '_edges', {}))
+  if (current['_edges']) {
+    edgeKeys.forEach(key => {
+      current['_edges'][key] = current['_edges'][key].filter(
+        edge => edge !== null
+      )
+    })
+  }
+
   const data = JSON.stringify({
     id: get(current, '_id'),
-    name: get(current, '_name', 'Generic and Unnamed Diagram With Exceptionally Long Title'),
+    name: get(
+      current,
+      '_name',
+      'Generic and Unnamed Diagram With Exceptionally Long Title'
+    ),
     nodes: get(current, '_nodes', {}),
     edges: get(current, '_edges', {})
   })
   const element = document.createElement('a')
-  element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`)
-  element.setAttribute('download', `${filename} - ${dayjs().format('YYYY-MM-DD/THHmmss')}.json`)
+  element.setAttribute(
+    'href',
+    `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`
+  )
+  element.setAttribute(
+    'download',
+    `${filename} - ${dayjs().format('YYYY-MM-DD/THHmmss')}.json`
+  )
 
   element.style.display = 'none'
   document.body.appendChild(element)
@@ -23,12 +43,20 @@ export const downloadFile = async () => {
   document.body.removeChild(element)
 }
 
-const handleFile = (event) => {
+const handleFile = event => {
   const reader = new FileReader()
   reader.readAsBinaryString(event.target.files[0])
 
   reader.onloadend = async () => {
     const data = JSON.parse(reader.result)
+
+    const edgeKeys = Object.keys(get(data, 'edges', {}))
+    if (data['edges']) {
+      edgeKeys.forEach(key => {
+        data['edges'][key] = data['edges'][key].filter(edge => edge !== null)
+      })
+    }
+
     const edges = get(data, 'edges', {})
     const nodes = get(data, 'nodes', {})
     const id = get(data, 'id', uuid())
