@@ -29,7 +29,9 @@ const _Graph = () => {
         if (!edge) return
         if (edge.node === key) return
         const otherEdges = edges[edge.node]
-        const otherEdgeIndex = otherEdges && otherEdges.findIndex(edge => (edge && edge.node === currentEdgeID))
+        const otherEdgeIndex =
+          otherEdges &&
+          otherEdges.findIndex(edge => edge && edge.node === currentEdgeID)
         if (otherEdgeIndex >= 0) {
           otherEdges.splice(otherEdgeIndex, 1)
           if (!didFix) didFix = true
@@ -53,7 +55,7 @@ const _Graph = () => {
     return setNodes(nodes)
   }
 
-  const updateBatchNodePositions = async (nodes) => {
+  const updateBatchNodePositions = async nodes => {
     const existingNodes = await getNodes()
     Object.entries(nodes).forEach(([node, { x, y }]) => {
       if (existingNodes[node]) {
@@ -107,26 +109,26 @@ const _Graph = () => {
     return _get('_diagrams', {})
   }
 
-  const updateDiagrams = async (diagram) => {
+  const updateDiagrams = async diagram => {
     if (!diagram._id) return
     const diagrams = await getDiagrams()
     diagrams[diagram._id] = diagram
     return _set('_diagrams', diagrams)
   }
 
-  const setEdges = async (edges) => {
+  const setEdges = async edges => {
     const current = await getCurrentDiagram()
     current._edges = edges
     return updateDiagrams(current)
   }
 
-  const setNodes = async (nodes) => {
+  const setNodes = async nodes => {
     const current = await getCurrentDiagram()
     current._nodes = nodes
     return updateDiagrams(current)
   }
 
-  const addNode = async (node) => {
+  const addNode = async node => {
     if (!node.id) throw new Error('Nodes must have IDs to be added')
     const _nodes = await getNodes()
 
@@ -137,7 +139,7 @@ const _Graph = () => {
   }
 
   const addEdge = async (node1, node2, data) => {
-    if (!node1.id || !node2.id) throw new Error('Nodes must have IDs to add edges')
+    if (!node1.id || !node2.id) { throw new Error('Nodes must have IDs to add edges') }
 
     const _edges = await getEdges()
 
@@ -147,13 +149,15 @@ const _Graph = () => {
   }
 
   const addDirectedEdge = async (node1, node2, data) => {
-    if (!node1.id || !node2.id) throw new Error('Nodes must have IDs to add directed edges')
+    if (!node1.id || !node2.id) { throw new Error('Nodes must have IDs to add directed edges') }
 
     const _edges = await getEdges()
 
     if (!Array.isArray(_edges[node1.id])) _edges[node1.id] = []
 
-    const node2TargetID = _edges[node1.id].findIndex(edge => (edge && edge.node === node2.id))
+    const node2TargetID = _edges[node1.id].findIndex(
+      edge => edge && edge.node === node2.id
+    )
 
     if (node2TargetID >= 0) {
       // Replace edge because it exists already
@@ -167,21 +171,25 @@ const _Graph = () => {
   }
 
   const removeDirectedEdge = async (node1, node2) => {
-    if (!node1.id || !node2.id) throw new Error('Nodes must have IDs to remove directed eges')
+    if (!node1.id || !node2.id) { throw new Error('Nodes must have IDs to remove directed eges') }
 
     const _edges = await getEdges()
 
-    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(edge => (edge && edge.node !== node2.id))
+    _edges[node1.id] =
+      _edges[node1.id] &&
+      _edges[node1.id].filter(edge => edge && edge.node !== node2.id)
 
     await setEdges(_edges)
   }
 
   const removeEdge = async (node1, node2) => {
-    if (!node1.id || !node2.id) throw new Error('Nodes must have IDs to remove edges')
+    if (!node1.id || !node2.id) { throw new Error('Nodes must have IDs to remove edges') }
 
     const _edges = await getEdges()
 
-    _edges[node1.id] = _edges[node1.id] && _edges[node1.id].filter(edge => (edge && edge.node !== node2.id))
+    _edges[node1.id] =
+      _edges[node1.id] &&
+      _edges[node1.id].filter(edge => edge && edge.node !== node2.id)
 
     await setEdges(_edges)
   }
@@ -190,7 +198,10 @@ const _Graph = () => {
     let node = null
     if (id) {
       const nodes = await getNodes()
-      const position = get(nodes, `[${id}].position`, { x: undefined, y: undefined })
+      const position = get(nodes, `[${id}].position`, {
+        x: undefined,
+        y: undefined
+      })
       node = {
         id,
         edges: [],
@@ -234,14 +245,14 @@ const _Graph = () => {
 
     connectionKeys.forEach(key => {
       const info = get(connections, `${[key]}.connectedTo`, null)
-      if (!info) throw new Error('You cannot make a connection without a target')
+      if (!info) { throw new Error('You cannot make a connection without a target') }
       const type = get(connections, `${[key]}.connectionType`, null)
       if (!type) throw new Error('You cannot make a connection without a type')
 
       const read = get(connections, `${[key]}.read`, null)
       const write = get(connections, `${[key]}.write`, null)
 
-      if (!read && !write) throw new Error('You must specify a read or a write option')
+      if (!read && !write) { throw new Error('You must specify a read or a write option') }
 
       const data = get(connections, `[${key}].data`, {})
 
@@ -278,7 +289,7 @@ const _Graph = () => {
     return node
   }
 
-  const makeEdges = async (node) => {
+  const makeEdges = async node => {
     const edges = get(node, 'edges', [])
     const previousEdges = get(node, 'previousEdges', [])
 
@@ -297,7 +308,7 @@ const _Graph = () => {
         id: get(edge, 'id')
       }
 
-      const prevEdge = previousEdges.find(prev => (prev && prev.id === edge.id))
+      const prevEdge = previousEdges.find(prev => prev && prev.id === edge.id)
 
       const prev = {
         read: get(prevEdge, `data.read`, read),
@@ -348,11 +359,11 @@ const _Graph = () => {
     }
   }
 
-  const setCurrentDiagram = async (id) => {
+  const setCurrentDiagram = async id => {
     return _set('_currentDiagram', id)
   }
 
-  const setName = async (name) => {
+  const setName = async name => {
     const current = await getCurrentDiagram()
     current._name = name
     return updateDiagrams(current)
@@ -373,7 +384,9 @@ const _Graph = () => {
   const getCurrentDiagram = async () => {
     const diagrams = await getDiagrams()
     let current = await _get('_currentDiagram', null)
-    const diagramKeys = Object.keys(diagrams).filter(key => !diagrams[key]._deleted)
+    const diagramKeys = Object.keys(diagrams).filter(
+      key => !diagrams[key]._deleted
+    )
     if (!current || get(diagrams, '[current]._deleted')) {
       if (diagramKeys.length > 0) {
         current = diagramKeys[0]
@@ -412,7 +425,7 @@ const _Graph = () => {
     await updateDiagrams(diagram)
   }
 
-  const deleteNodes = async (nodes) => {
+  const deleteNodes = async nodes => {
     if (!Array.isArray(nodes)) return
     const _edges = await getEdges()
     const _nodes = await getNodes()
@@ -451,13 +464,15 @@ const _Graph = () => {
     return diagram._name || ''
   }
 
-  const deleteDiagram = async (id) => {
+  const deleteDiagram = async id => {
     let diagrams = await getDiagrams()
     const diagram = diagrams[id]
     if (diagram) {
       diagram._deleted = true
       await updateDiagrams(diagram)
-      const activeDiagrams = Object.values(diagrams).filter(diagram => !diagram._deleted)
+      const activeDiagrams = Object.values(diagrams).filter(
+        diagram => !diagram._deleted
+      )
       if (activeDiagrams.length > 1) {
         diagrams = await getDiagrams()
         setCurrentDiagram(Object.keys(diagrams)[0])
@@ -467,7 +482,25 @@ const _Graph = () => {
     }
   }
 
-  const countEdges = async (id) => {
+  const restoreDiagram = async id => {
+    let diagrams = await getDiagrams()
+    const diagram = diagrams[id]
+    if (diagram) {
+      diagram._deleted = false
+      await updateDiagrams(diagram)
+      const activeDiagrams = Object.values(diagrams).filter(
+        diagram => !diagram._deleted
+      )
+      if (activeDiagrams.length > 1) {
+        diagrams = await getDiagrams()
+        setCurrentDiagram(Object.keys(diagrams)[0])
+      } else {
+        localStorage.removeItem('_currentDiagram')
+      }
+    }
+  }
+
+  const countEdges = async id => {
     const edges = await getEdges()
     let count = get(edges, `[${id}].length`)
     console.log(count)
@@ -492,6 +525,7 @@ const _Graph = () => {
     saveUploadedData,
     getCurrentDiagram,
     deleteDiagram,
+    restoreDiagram,
     deleteNodes,
     makeNewDiagram,
     getNodesArray,

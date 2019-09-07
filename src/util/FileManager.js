@@ -65,6 +65,13 @@ const handleFile = event => {
     const nodes = get(data, 'nodes', {})
     const id = get(data, 'id', uuid())
     const name = get(data, 'name', 'Unnamed System')
+
+    const diagrams = await Graph.getDiagrams()
+
+    if (diagrams[id]) {
+      await Graph.restoreDiagram(diagrams[id]._id)
+    }
+
     await Graph.saveUploadedData({ edges, nodes, name, id })
     Subject.next('graph-data-updated')
   }
