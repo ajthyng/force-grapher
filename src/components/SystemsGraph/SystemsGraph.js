@@ -341,7 +341,7 @@ export const SystemsGraph = () => {
           })
           graph.current.network.selectNodes([lastAdded.current])
           viewPort.current = {}
-        } catch {
+        } catch (err) {
           lastAdded.current = null
         }
       }

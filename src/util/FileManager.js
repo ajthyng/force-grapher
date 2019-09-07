@@ -6,7 +6,7 @@ import { Subject } from './Subject'
 
 export const downloadFile = async () => {
   const current = await Graph.getCurrentDiagram()
-  const filename = get(current, '_name', 'Default Name')
+  const diagramName = get(current, '_name', 'Default Name')
 
   const edgeKeys = Object.keys(get(current, '_edges', {}))
   if (current['_edges']) {
@@ -28,19 +28,23 @@ export const downloadFile = async () => {
     edges: get(current, '_edges', {})
   })
   const element = document.createElement('a')
-  element.setAttribute(
-    'href',
-    `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`
-  )
-  element.setAttribute(
-    'download',
-    `${filename} - ${dayjs().format('YYYY-MM-DD/THHmmss')}.json`
-  )
+  const blob = new Blob([data], { type: 'text/plain' })
+  const filename = `${diagramName} - ${dayjs().format(
+    'YYYY-MM-DD[T]HHmmss'
+  )}.json`
 
-  element.style.display = 'none'
-  document.body.appendChild(element)
-  element.click()
-  document.body.removeChild(element)
+  if (window.navigator.msSaveOrOpenBlob) {
+    window.navigator.msSaveBlob(blob, filename)
+  } else {
+    element.setAttribute('href', `data:text/plain;charset=utf-8,${data}`)
+
+    element.setAttribute('download', filename)
+
+    element.style.display = 'none'
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
 }
 
 const handleFile = event => {
@@ -61,7 +65,6 @@ const handleFile = event => {
     const nodes = get(data, 'nodes', {})
     const id = get(data, 'id', uuid())
     const name = get(data, 'name', 'Unnamed System')
-
     await Graph.saveUploadedData({ edges, nodes, name, id })
     Subject.next('graph-data-updated')
   }
